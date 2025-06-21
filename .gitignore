@@ -4,8 +4,8 @@
 *.dll
 *.so
 *.dylib
-score-checker
-score-checker-*
+# score-checker
+# score-checker-*
 
 # Test binary, built with `go test -c`
 *.test
