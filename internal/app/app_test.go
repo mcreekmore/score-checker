@@ -372,18 +372,18 @@ func TestRunOnceIntegration(t *testing.T) {
 	// The actual RunOnce function is difficult to test in isolation because it depends
 	// on the global config system. This test verifies the function can be called
 	// without panicking, which provides some coverage for the RunOnce function.
-	
+
 	// Create a temporary config directory
 	tempDir := t.TempDir()
 	configFile := tempDir + "/config.yaml"
-	
+
 	// Create a minimal config file to avoid loading errors
 	configContent := `
 triggersearch: false
 batchsize: 5
 interval: "1h"
 `
-	
+
 	err := os.WriteFile(configFile, []byte(configContent), 0644)
 	if err != nil {
 		t.Fatalf("failed to create test config: %v", err)
@@ -404,7 +404,7 @@ interval: "1h"
 			os.Unsetenv("SCORECHECK_CONFIG_PATH")
 		}
 	}()
-	
+
 	os.Setenv("SCORECHECK_CONFIG_PATH", tempDir)
 	os.Setenv("SCORECHECK_CONFIG_FILE", "config")
 
@@ -448,11 +448,11 @@ func TestRunDaemonInit(t *testing.T) {
 	// This test primarily serves to document the RunDaemon function exists
 	// and could be extended in the future with more sophisticated testing
 	// mechanisms like context cancellation.
-	
+
 	// For now, we acknowledge that RunDaemon cannot be easily unit tested
 	// without refactoring it to accept a context for cancellation.
 	// The function is primarily tested through integration tests and manual testing.
-	
+
 	t.Skip("RunDaemon runs indefinitely and requires integration testing")
 }
 
