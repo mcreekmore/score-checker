@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -24,7 +25,12 @@ func Init() {
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("/etc/score-checker/")
-	_ = viper.ReadInConfig() // ignore error
+
+	if err := viper.ReadInConfig(); err != nil {
+		fmt.Printf("Config file not read: %v\n", err)
+	} else {
+		fmt.Printf("Using config file: %s\n", viper.ConfigFileUsed())
+	}
 }
 
 // Load loads configuration using Viper
