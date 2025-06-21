@@ -254,7 +254,6 @@ func RunOnce() {
 func RunDaemon() {
 	cfg := config.Load()
 	fmt.Printf("Starting daemon mode with interval: %v\n", cfg.Interval)
-	fmt.Printf("Batch size: %d items per run\n", cfg.BatchSize)
 
 	ticker := time.NewTicker(cfg.Interval)
 	defer ticker.Stop()
