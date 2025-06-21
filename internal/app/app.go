@@ -212,16 +212,16 @@ func RunOnce() {
 		fmt.Printf("Found %d Sonarr instance(s)\n", len(cfg.SonarrInstances))
 		for _, instance := range cfg.SonarrInstances {
 			fmt.Printf("\n=== Checking Sonarr Instance: %s ===\n", instance.Name)
-			
+
 			client := sonarr.NewClient(instance)
 			fmt.Printf("[%s] Fetching series and checking custom format scores...\n", instance.Name)
-			
+
 			lowScoreEpisodes, err := findLowScoreEpisodes(client, cfg, instance.Name)
 			if err != nil {
 				log.Printf("[%s] Error finding low score episodes: %v", instance.Name, err)
 				continue
 			}
-			
+
 			printLowScoreEpisodes(lowScoreEpisodes, cfg.TriggerSearch, instance.Name)
 		}
 	}
@@ -231,16 +231,16 @@ func RunOnce() {
 		fmt.Printf("Found %d Radarr instance(s)\n", len(cfg.RadarrInstances))
 		for _, instance := range cfg.RadarrInstances {
 			fmt.Printf("\n=== Checking Radarr Instance: %s ===\n", instance.Name)
-			
+
 			client := radarr.NewClient(instance)
 			fmt.Printf("[%s] Fetching movies and checking custom format scores...\n", instance.Name)
-			
+
 			lowScoreMovies, err := findLowScoreMovies(client, cfg, instance.Name)
 			if err != nil {
 				log.Printf("[%s] Error finding low score movies: %v", instance.Name, err)
 				continue
 			}
-			
+
 			printLowScoreMovies(lowScoreMovies, cfg.TriggerSearch, instance.Name)
 		}
 	}

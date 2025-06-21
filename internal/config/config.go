@@ -51,17 +51,17 @@ func Load() types.Config {
 					name = "instance" + string(rune('0'+i))
 				}
 			}
-			
+
 			baseURL, ok := instance["baseurl"].(string)
 			if !ok {
 				log.Fatalf("Sonarr instance '%s' missing baseurl", name)
 			}
-			
+
 			apiKey, ok := instance["apikey"].(string)
 			if !ok {
 				log.Fatalf("Sonarr instance '%s' missing apikey", name)
 			}
-			
+
 			config.SonarrInstances = append(config.SonarrInstances, types.ServiceConfig{
 				Name:    name,
 				BaseURL: baseURL,
@@ -81,17 +81,17 @@ func Load() types.Config {
 					name = "instance" + string(rune('0'+i))
 				}
 			}
-			
+
 			baseURL, ok := instance["baseurl"].(string)
 			if !ok {
 				log.Fatalf("Radarr instance '%s' missing baseurl", name)
 			}
-			
+
 			apiKey, ok := instance["apikey"].(string)
 			if !ok {
 				log.Fatalf("Radarr instance '%s' missing apikey", name)
 			}
-			
+
 			config.RadarrInstances = append(config.RadarrInstances, types.ServiceConfig{
 				Name:    name,
 				BaseURL: baseURL,

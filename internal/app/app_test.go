@@ -211,10 +211,10 @@ func TestFindLowScoreMovies(t *testing.T) {
 
 func TestPrintLowScoreEpisodes(t *testing.T) {
 	tests := []struct {
-		name          string
-		episodes      []types.LowScoreEpisode
-		triggerSearch bool
-		instanceName  string
+		name           string
+		episodes       []types.LowScoreEpisode
+		triggerSearch  bool
+		instanceName   string
 		expectedOutput []string
 	}{
 		{
@@ -254,10 +254,10 @@ func TestPrintLowScoreEpisodes(t *testing.T) {
 			expectedOutput: []string{"[test]", "Better Call Saul", "S01E01", "Uno", "Custom Format Score: -5", "Episode ID: 201", "Searches have been triggered"},
 		},
 		{
-			name:          "handles empty episodes list",
-			episodes:      []types.LowScoreEpisode{},
-			triggerSearch: false,
-			instanceName:  "test",
+			name:           "handles empty episodes list",
+			episodes:       []types.LowScoreEpisode{},
+			triggerSearch:  false,
+			instanceName:   "test",
 			expectedOutput: []string{"[test]", "No episodes found"},
 		},
 	}
@@ -292,10 +292,10 @@ func TestPrintLowScoreEpisodes(t *testing.T) {
 
 func TestPrintLowScoreMovies(t *testing.T) {
 	tests := []struct {
-		name          string
-		movies        []types.LowScoreMovie
-		triggerSearch bool
-		instanceName  string
+		name           string
+		movies         []types.LowScoreMovie
+		triggerSearch  bool
+		instanceName   string
 		expectedOutput []string
 	}{
 		{
@@ -331,10 +331,10 @@ func TestPrintLowScoreMovies(t *testing.T) {
 			expectedOutput: []string{"[test]", "Blade Runner (1982)", "Custom Format Score: -20", "Movie ID: 2", "Searches have been triggered"},
 		},
 		{
-			name:          "handles empty movies list",
-			movies:        []types.LowScoreMovie{},
-			triggerSearch: false,
-			instanceName:  "test",
+			name:           "handles empty movies list",
+			movies:         []types.LowScoreMovie{},
+			triggerSearch:  false,
+			instanceName:   "test",
 			expectedOutput: []string{"[test]", "No movies found"},
 		},
 	}
@@ -374,7 +374,6 @@ func TestRunOnceIntegration(t *testing.T) {
 	// In a real-world scenario, we'd refactor RunOnce to accept a config parameter
 	t.Skip("Integration test requires config mocking - would need refactoring for better testability")
 }
-
 
 // Benchmark for findLowScoreEpisodes
 func BenchmarkFindLowScoreEpisodes(b *testing.B) {

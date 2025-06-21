@@ -59,23 +59,23 @@ func TestGetSeries(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:         "empty response",
-			responseCode: http.StatusOK,
-			responseBody: `[]`,
+			name:           "empty response",
+			responseCode:   http.StatusOK,
+			responseBody:   `[]`,
 			expectedSeries: []types.Series{},
 			expectError:    false,
 		},
 		{
-			name:         "server error",
-			responseCode: http.StatusInternalServerError,
-			responseBody: `{"error": "internal server error"}`,
+			name:           "server error",
+			responseCode:   http.StatusInternalServerError,
+			responseBody:   `{"error": "internal server error"}`,
 			expectedSeries: nil,
 			expectError:    true,
 		},
 		{
-			name:         "invalid json",
-			responseCode: http.StatusOK,
-			responseBody: `invalid json`,
+			name:           "invalid json",
+			responseCode:   http.StatusOK,
+			responseBody:   `invalid json`,
 			expectedSeries: nil,
 			expectError:    true,
 		},
@@ -88,7 +88,7 @@ func TestGetSeries(t *testing.T) {
 				if r.Header.Get("X-Api-Key") != "test-api-key" {
 					t.Errorf("expected X-Api-Key header 'test-api-key', got %q", r.Header.Get("X-Api-Key"))
 				}
-				
+
 				// Verify URL path
 				if r.URL.Path != "/api/v3/series" {
 					t.Errorf("expected path '/api/v3/series', got %q", r.URL.Path)
@@ -181,10 +181,10 @@ func TestGetEpisodes(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:         "server error",
-			seriesID:     1,
-			responseCode: http.StatusInternalServerError,
-			responseBody: `{"error": "internal server error"}`,
+			name:             "server error",
+			seriesID:         1,
+			responseCode:     http.StatusInternalServerError,
+			responseBody:     `{"error": "internal server error"}`,
 			expectedEpisodes: nil,
 			expectError:      true,
 		},
@@ -197,18 +197,18 @@ func TestGetEpisodes(t *testing.T) {
 				if r.Header.Get("X-Api-Key") != "test-api-key" {
 					t.Errorf("expected X-Api-Key header 'test-api-key', got %q", r.Header.Get("X-Api-Key"))
 				}
-				
+
 				// Verify URL path and query parameters
 				if r.URL.Path != "/api/v3/episode" {
 					t.Errorf("expected path '/api/v3/episode', got %q", r.URL.Path)
 				}
-				
+
 				seriesID := r.URL.Query().Get("seriesId")
 				expectedSeriesID := fmt.Sprintf("%d", tt.seriesID)
 				if seriesID != expectedSeriesID {
 					t.Errorf("expected seriesId query param %q, got %q", expectedSeriesID, seriesID)
 				}
-				
+
 				includeEpisodeFile := r.URL.Query().Get("includeEpisodeFile")
 				if includeEpisodeFile != "true" {
 					t.Errorf("expected includeEpisodeFile query param 'true', got %q", includeEpisodeFile)
@@ -265,7 +265,7 @@ func TestGetEpisodes(t *testing.T) {
 				if episode.HasFile != expected.HasFile {
 					t.Errorf("episode[%d] expected HasFile %v, got %v", i, expected.HasFile, episode.HasFile)
 				}
-				
+
 				if expected.EpisodeFile != nil {
 					if episode.EpisodeFile == nil {
 						t.Errorf("episode[%d] expected EpisodeFile to not be nil", i)
@@ -287,12 +287,12 @@ func TestGetEpisodes(t *testing.T) {
 
 func TestTriggerEpisodeSearch(t *testing.T) {
 	tests := []struct {
-		name               string
-		episodeIDs         []int
-		responseCode       int
-		responseBody       string
-		expectedResponse   *types.CommandResponse
-		expectError        bool
+		name             string
+		episodeIDs       []int
+		responseCode     int
+		responseBody     string
+		expectedResponse *types.CommandResponse
+		expectError      bool
 	}{
 		{
 			name:         "successful search trigger",
@@ -313,18 +313,18 @@ func TestTriggerEpisodeSearch(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:         "empty episode IDs",
-			episodeIDs:   []int{},
-			responseCode: 0, // won't be used
-			responseBody: "",
+			name:             "empty episode IDs",
+			episodeIDs:       []int{},
+			responseCode:     0, // won't be used
+			responseBody:     "",
 			expectedResponse: nil,
 			expectError:      true,
 		},
 		{
-			name:         "server error",
-			episodeIDs:   []int{1, 2},
-			responseCode: http.StatusBadRequest,
-			responseBody: `{"error": "bad request"}`,
+			name:             "server error",
+			episodeIDs:       []int{1, 2},
+			responseCode:     http.StatusBadRequest,
+			responseBody:     `{"error": "bad request"}`,
 			expectedResponse: nil,
 			expectError:      true,
 		},
@@ -333,43 +333,43 @@ func TestTriggerEpisodeSearch(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var server *httptest.Server
-			
+
 			if len(tt.episodeIDs) > 0 {
 				server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					// Verify API key header
 					if r.Header.Get("X-Api-Key") != "test-api-key" {
 						t.Errorf("expected X-Api-Key header 'test-api-key', got %q", r.Header.Get("X-Api-Key"))
 					}
-					
+
 					// Verify Content-Type header
 					if r.Header.Get("Content-Type") != "application/json" {
 						t.Errorf("expected Content-Type header 'application/json', got %q", r.Header.Get("Content-Type"))
 					}
-					
+
 					// Verify URL path
 					if r.URL.Path != "/api/v3/command" {
 						t.Errorf("expected path '/api/v3/command', got %q", r.URL.Path)
 					}
-					
+
 					// Verify HTTP method
 					if r.Method != "POST" {
 						t.Errorf("expected POST method, got %q", r.Method)
 					}
-					
+
 					// Verify request body
 					var cmdReq types.CommandRequest
 					if err := json.NewDecoder(r.Body).Decode(&cmdReq); err != nil {
 						t.Errorf("failed to decode request body: %v", err)
 					}
-					
+
 					if cmdReq.Name != "EpisodeSearch" {
 						t.Errorf("expected command name 'EpisodeSearch', got %q", cmdReq.Name)
 					}
-					
+
 					if len(cmdReq.EpisodeIDs) != len(tt.episodeIDs) {
 						t.Errorf("expected %d episode IDs, got %d", len(tt.episodeIDs), len(cmdReq.EpisodeIDs))
 					}
-					
+
 					for i, id := range tt.episodeIDs {
 						if cmdReq.EpisodeIDs[i] != id {
 							t.Errorf("expected episode ID %d at index %d, got %d", id, i, cmdReq.EpisodeIDs[i])
@@ -383,14 +383,14 @@ func TestTriggerEpisodeSearch(t *testing.T) {
 			}
 
 			config := types.ServiceConfig{
-				Name:    "test",
+				Name: "test",
 				BaseURL: func() string {
 					if server != nil {
 						return server.URL
 					}
 					return "http://localhost:8989"
 				}(),
-				APIKey:  "test-api-key",
+				APIKey: "test-api-key",
 			}
 			client := NewClient(config)
 
@@ -458,7 +458,7 @@ func TestMakeRequest(t *testing.T) {
 				if !strings.HasSuffix(r.URL.Path, tt.endpoint) {
 					t.Errorf("expected endpoint to end with %q, got %q", tt.endpoint, r.URL.Path)
 				}
-				
+
 				w.WriteHeader(tt.responseCode)
 				w.Write([]byte(tt.responseBody))
 			}))

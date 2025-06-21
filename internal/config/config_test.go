@@ -11,9 +11,9 @@ import (
 func TestInit(t *testing.T) {
 	// Reset viper for clean test
 	viper.Reset()
-	
+
 	Init()
-	
+
 	// Test default values
 	if viper.GetBool("triggersearch") != false {
 		t.Error("expected triggersearch default to be false")
@@ -30,9 +30,9 @@ func TestLoadWithDefaults(t *testing.T) {
 	// Reset viper for clean test
 	viper.Reset()
 	Init()
-	
+
 	cfg := Load()
-	
+
 	// Test defaults
 	if cfg.TriggerSearch != false {
 		t.Error("expected TriggerSearch to be false by default")
@@ -54,21 +54,21 @@ func TestLoadWithDefaults(t *testing.T) {
 func TestLoadWithEnvironmentVariables(t *testing.T) {
 	// Reset viper for clean test
 	viper.Reset()
-	
+
 	// Set environment variables
 	os.Setenv("SCORECHECK_TRIGGERSEARCH", "true")
 	os.Setenv("SCORECHECK_BATCHSIZE", "10")
 	os.Setenv("SCORECHECK_INTERVAL", "30m")
-	
+
 	defer func() {
 		os.Unsetenv("SCORECHECK_TRIGGERSEARCH")
 		os.Unsetenv("SCORECHECK_BATCHSIZE")
 		os.Unsetenv("SCORECHECK_INTERVAL")
 	}()
-	
+
 	Init()
 	cfg := Load()
-	
+
 	if !cfg.TriggerSearch {
 		t.Error("expected TriggerSearch to be true from environment")
 	}
@@ -84,12 +84,12 @@ func TestLoadWithViperConfig(t *testing.T) {
 	// Reset viper for clean test
 	viper.Reset()
 	Init()
-	
+
 	// Set viper values directly to simulate config file
 	viper.Set("triggersearch", true)
 	viper.Set("batchsize", 15)
 	viper.Set("interval", "2h")
-	
+
 	// Set up Sonarr instances
 	sonarrInstances := []map[string]interface{}{
 		{
@@ -104,7 +104,7 @@ func TestLoadWithViperConfig(t *testing.T) {
 		},
 	}
 	viper.Set("sonarr", sonarrInstances)
-	
+
 	// Set up Radarr instances
 	radarrInstances := []map[string]interface{}{
 		{
@@ -114,9 +114,9 @@ func TestLoadWithViperConfig(t *testing.T) {
 		},
 	}
 	viper.Set("radarr", radarrInstances)
-	
+
 	cfg := Load()
-	
+
 	// Test general config
 	if !cfg.TriggerSearch {
 		t.Error("expected TriggerSearch to be true")
@@ -127,7 +127,7 @@ func TestLoadWithViperConfig(t *testing.T) {
 	if cfg.Interval != 2*time.Hour {
 		t.Errorf("expected Interval to be 2 hours, got %v", cfg.Interval)
 	}
-	
+
 	// Test Sonarr instances
 	if len(cfg.SonarrInstances) != 2 {
 		t.Errorf("expected 2 Sonarr instances, got %d", len(cfg.SonarrInstances))
@@ -144,7 +144,7 @@ func TestLoadWithViperConfig(t *testing.T) {
 	if cfg.SonarrInstances[1].Name != "4k" {
 		t.Errorf("expected second Sonarr instance name to be '4k', got %q", cfg.SonarrInstances[1].Name)
 	}
-	
+
 	// Test Radarr instances
 	if len(cfg.RadarrInstances) != 1 {
 		t.Errorf("expected 1 Radarr instance, got %d", len(cfg.RadarrInstances))
@@ -164,7 +164,7 @@ func TestLoadWithDefaultInstanceNames(t *testing.T) {
 	// Reset viper for clean test
 	viper.Reset()
 	Init()
-	
+
 	// Set up instances without names
 	sonarrInstances := []map[string]interface{}{
 		{
@@ -177,9 +177,9 @@ func TestLoadWithDefaultInstanceNames(t *testing.T) {
 		},
 	}
 	viper.Set("sonarr", sonarrInstances)
-	
+
 	cfg := Load()
-	
+
 	if len(cfg.SonarrInstances) != 2 {
 		t.Errorf("expected 2 Sonarr instances, got %d", len(cfg.SonarrInstances))
 	}
@@ -195,9 +195,9 @@ func TestLoadInvalidInterval(t *testing.T) {
 	// Reset viper for clean test
 	viper.Reset()
 	Init()
-	
+
 	viper.Set("interval", "invalid")
-	
+
 	// This should cause a fatal error, but we can't easily test that
 	// In a real scenario, this would call log.Fatalf
 	// For testing purposes, we'd need to refactor the code to return errors
@@ -208,7 +208,7 @@ func TestLoadMissingRequiredFields(t *testing.T) {
 	// Reset viper for clean test
 	viper.Reset()
 	Init()
-	
+
 	t.Run("missing sonarr baseurl", func(t *testing.T) {
 		sonarrInstances := []map[string]interface{}{
 			{
@@ -218,15 +218,15 @@ func TestLoadMissingRequiredFields(t *testing.T) {
 			},
 		}
 		viper.Set("sonarr", sonarrInstances)
-		
+
 		// This should cause a fatal error in Load()
 		// In a real test, we'd need to refactor to return errors
 	})
-	
+
 	t.Run("missing sonarr apikey", func(t *testing.T) {
 		viper.Reset()
 		Init()
-		
+
 		sonarrInstances := []map[string]interface{}{
 			{
 				"name":    "main",
@@ -235,7 +235,7 @@ func TestLoadMissingRequiredFields(t *testing.T) {
 			},
 		}
 		viper.Set("sonarr", sonarrInstances)
-		
+
 		// This should cause a fatal error in Load()
 		// In a real test, we'd need to refactor to return errors
 	})
@@ -245,13 +245,13 @@ func TestLoadEmptyInstanceArrays(t *testing.T) {
 	// Reset viper for clean test
 	viper.Reset()
 	Init()
-	
+
 	// Set empty arrays
 	viper.Set("sonarr", []map[string]interface{}{})
 	viper.Set("radarr", []map[string]interface{}{})
-	
+
 	cfg := Load()
-	
+
 	if len(cfg.SonarrInstances) != 0 {
 		t.Errorf("expected 0 Sonarr instances, got %d", len(cfg.SonarrInstances))
 	}

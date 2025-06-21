@@ -189,7 +189,7 @@ func TestEpisode(t *testing.T) {
 func TestLowScoreEpisode(t *testing.T) {
 	series := Series{ID: 1, Title: "Breaking Bad"}
 	episode := Episode{ID: 456, Title: "Pilot", SeasonNumber: 1, EpisodeNumber: 1}
-	
+
 	lowScoreEpisode := LowScoreEpisode{
 		Series:            series,
 		Episode:           episode,
@@ -264,7 +264,7 @@ func TestMovieWithFile(t *testing.T) {
 
 func TestLowScoreMovie(t *testing.T) {
 	movie := MovieWithFile{ID: 1, Title: "The Matrix", Year: 1999}
-	
+
 	lowScoreMovie := LowScoreMovie{
 		Movie:             movie,
 		CustomFormatScore: -25,

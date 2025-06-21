@@ -88,23 +88,23 @@ func TestGetMovies(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:         "empty response",
-			responseCode: http.StatusOK,
-			responseBody: `[]`,
+			name:           "empty response",
+			responseCode:   http.StatusOK,
+			responseBody:   `[]`,
 			expectedMovies: []types.MovieWithFile{},
 			expectError:    false,
 		},
 		{
-			name:         "server error",
-			responseCode: http.StatusInternalServerError,
-			responseBody: `{"error": "internal server error"}`,
+			name:           "server error",
+			responseCode:   http.StatusInternalServerError,
+			responseBody:   `{"error": "internal server error"}`,
 			expectedMovies: nil,
 			expectError:    true,
 		},
 		{
-			name:         "invalid json",
-			responseCode: http.StatusOK,
-			responseBody: `invalid json`,
+			name:           "invalid json",
+			responseCode:   http.StatusOK,
+			responseBody:   `invalid json`,
 			expectedMovies: nil,
 			expectError:    true,
 		},
@@ -117,7 +117,7 @@ func TestGetMovies(t *testing.T) {
 				if r.Header.Get("X-Api-Key") != "test-api-key" {
 					t.Errorf("expected X-Api-Key header 'test-api-key', got %q", r.Header.Get("X-Api-Key"))
 				}
-				
+
 				// Verify URL path
 				if r.URL.Path != "/api/v3/movie" {
 					t.Errorf("expected path '/api/v3/movie', got %q", r.URL.Path)
@@ -168,7 +168,7 @@ func TestGetMovies(t *testing.T) {
 				if movie.HasFile != expected.HasFile {
 					t.Errorf("movie[%d] expected HasFile %v, got %v", i, expected.HasFile, movie.HasFile)
 				}
-				
+
 				if expected.MovieFile != nil {
 					if movie.MovieFile == nil {
 						t.Errorf("movie[%d] expected MovieFile to not be nil", i)
@@ -190,12 +190,12 @@ func TestGetMovies(t *testing.T) {
 
 func TestTriggerMovieSearch(t *testing.T) {
 	tests := []struct {
-		name               string
-		movieIDs           []int
-		responseCode       int
-		responseBody       string
-		expectedResponse   *types.CommandResponse
-		expectError        bool
+		name             string
+		movieIDs         []int
+		responseCode     int
+		responseBody     string
+		expectedResponse *types.CommandResponse
+		expectError      bool
 	}{
 		{
 			name:         "successful search trigger",
@@ -234,18 +234,18 @@ func TestTriggerMovieSearch(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name:         "empty movie IDs",
-			movieIDs:     []int{},
-			responseCode: 0, // won't be used
-			responseBody: "",
+			name:             "empty movie IDs",
+			movieIDs:         []int{},
+			responseCode:     0, // won't be used
+			responseBody:     "",
 			expectedResponse: nil,
 			expectError:      true,
 		},
 		{
-			name:         "server error",
-			movieIDs:     []int{1, 2},
-			responseCode: http.StatusBadRequest,
-			responseBody: `{"error": "bad request"}`,
+			name:             "server error",
+			movieIDs:         []int{1, 2},
+			responseCode:     http.StatusBadRequest,
+			responseBody:     `{"error": "bad request"}`,
 			expectedResponse: nil,
 			expectError:      true,
 		},
@@ -254,39 +254,39 @@ func TestTriggerMovieSearch(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var server *httptest.Server
-			
+
 			if len(tt.movieIDs) > 0 {
 				server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					// Verify API key header
 					if r.Header.Get("X-Api-Key") != "test-api-key" {
 						t.Errorf("expected X-Api-Key header 'test-api-key', got %q", r.Header.Get("X-Api-Key"))
 					}
-					
+
 					// Verify Content-Type header
 					if r.Header.Get("Content-Type") != "application/json" {
 						t.Errorf("expected Content-Type header 'application/json', got %q", r.Header.Get("Content-Type"))
 					}
-					
+
 					// Verify URL path
 					if r.URL.Path != "/api/v3/command" {
 						t.Errorf("expected path '/api/v3/command', got %q", r.URL.Path)
 					}
-					
+
 					// Verify HTTP method
 					if r.Method != "POST" {
 						t.Errorf("expected POST method, got %q", r.Method)
 					}
-					
+
 					// Verify request body
 					var cmdReq map[string]interface{}
 					if err := json.NewDecoder(r.Body).Decode(&cmdReq); err != nil {
 						t.Errorf("failed to decode request body: %v", err)
 					}
-					
+
 					if cmdReq["name"] != "MoviesSearch" {
 						t.Errorf("expected command name 'MoviesSearch', got %q", cmdReq["name"])
 					}
-					
+
 					movieIDs, ok := cmdReq["movieIds"].([]interface{})
 					if !ok {
 						t.Error("expected movieIds to be an array")
@@ -307,14 +307,14 @@ func TestTriggerMovieSearch(t *testing.T) {
 			}
 
 			config := types.ServiceConfig{
-				Name:    "test",
+				Name: "test",
 				BaseURL: func() string {
 					if server != nil {
 						return server.URL
 					}
 					return "http://localhost:7878"
 				}(),
-				APIKey:  "test-api-key",
+				APIKey: "test-api-key",
 			}
 			client := NewClient(config)
 
@@ -389,7 +389,7 @@ func TestMakeRequest(t *testing.T) {
 				if !strings.HasSuffix(r.URL.Path, tt.endpoint) {
 					t.Errorf("expected endpoint to end with %q, got %q", tt.endpoint, r.URL.Path)
 				}
-				
+
 				w.WriteHeader(tt.responseCode)
 				w.Write([]byte(tt.responseBody))
 			}))

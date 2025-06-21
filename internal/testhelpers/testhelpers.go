@@ -19,7 +19,7 @@ type TestingInterface interface {
 func MockSonarrServer(t TestingInterface, series []types.Series, episodes map[int][]types.Episode, commandResponse *types.CommandResponse) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		
+
 		switch r.URL.Path {
 		case "/api/v3/series":
 			if r.Method != "GET" {
@@ -27,7 +27,7 @@ func MockSonarrServer(t TestingInterface, series []types.Series, episodes map[in
 				return
 			}
 			json.NewEncoder(w).Encode(series)
-			
+
 		case "/api/v3/episode":
 			if r.Method != "GET" {
 				w.WriteHeader(http.StatusMethodNotAllowed)
@@ -38,7 +38,7 @@ func MockSonarrServer(t TestingInterface, series []types.Series, episodes map[in
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
-			
+
 			var seriesID int
 			switch seriesIDStr {
 			case "1":
@@ -49,13 +49,13 @@ func MockSonarrServer(t TestingInterface, series []types.Series, episodes map[in
 				w.WriteHeader(http.StatusNotFound)
 				return
 			}
-			
+
 			if eps, ok := episodes[seriesID]; ok {
 				json.NewEncoder(w).Encode(eps)
 			} else {
 				json.NewEncoder(w).Encode([]types.Episode{})
 			}
-			
+
 		case "/api/v3/command":
 			if r.Method != "POST" {
 				w.WriteHeader(http.StatusMethodNotAllowed)
@@ -67,7 +67,7 @@ func MockSonarrServer(t TestingInterface, series []types.Series, episodes map[in
 			} else {
 				w.WriteHeader(http.StatusBadRequest)
 			}
-			
+
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -78,7 +78,7 @@ func MockSonarrServer(t TestingInterface, series []types.Series, episodes map[in
 func MockRadarrServer(t TestingInterface, movies []types.MovieWithFile, commandResponse *types.CommandResponse) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		
+
 		switch r.URL.Path {
 		case "/api/v3/movie":
 			if r.Method != "GET" {
@@ -86,7 +86,7 @@ func MockRadarrServer(t TestingInterface, movies []types.MovieWithFile, commandR
 				return
 			}
 			json.NewEncoder(w).Encode(movies)
-			
+
 		case "/api/v3/command":
 			if r.Method != "POST" {
 				w.WriteHeader(http.StatusMethodNotAllowed)
@@ -98,7 +98,7 @@ func MockRadarrServer(t TestingInterface, movies []types.MovieWithFile, commandR
 			} else {
 				w.WriteHeader(http.StatusBadRequest)
 			}
-			
+
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
