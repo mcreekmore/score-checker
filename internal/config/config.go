@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/viper"
 
+	"score-checker/internal/logger"
 	"score-checker/internal/types"
 )
 
@@ -15,6 +16,7 @@ func Init() {
 	viper.SetDefault("triggersearch", false)
 	viper.SetDefault("batchsize", 5)
 	viper.SetDefault("interval", "1h")
+	viper.SetDefault("loglevel", "INFO")
 
 	// Read config from environment variables
 	viper.AutomaticEnv()
@@ -27,8 +29,10 @@ func Init() {
 	viper.AddConfigPath("/etc/score-checker/")
 
 	if err := viper.ReadInConfig(); err != nil {
+		// Use fmt.Printf here since logger isn't initialized yet
 		fmt.Printf("Config file not read: %v\n", err)
 	} else {
+		// Use fmt.Printf here since logger isn't initialized yet
 		fmt.Printf("Using config file: %s\n", viper.ConfigFileUsed())
 	}
 }
@@ -40,10 +44,16 @@ func Load() types.Config {
 		log.Fatalf("Invalid interval format: %v", err)
 	}
 
+	logLevel := viper.GetString("loglevel")
+	
+	// Initialize logger with the configured level
+	logger.InitFromString(logLevel)
+	
 	config := types.Config{
 		TriggerSearch: viper.GetBool("triggersearch"),
 		BatchSize:     viper.GetInt("batchsize"),
 		Interval:      interval,
+		LogLevel:      logLevel,
 	}
 
 	// Load Sonarr instances

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"score-checker/internal/config"
+	"score-checker/internal/logger"
 	"score-checker/internal/radarr"
 	"score-checker/internal/sonarr"
 	"score-checker/internal/testhelpers"
@@ -211,6 +212,9 @@ func TestFindLowScoreMovies(t *testing.T) {
 }
 
 func TestPrintLowScoreEpisodes(t *testing.T) {
+	// Initialize logger for testing
+	logger.Init(logger.VERBOSE)
+	
 	tests := []struct {
 		name           string
 		episodes       []types.LowScoreEpisode
@@ -265,16 +269,22 @@ func TestPrintLowScoreEpisodes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Capture stdout
+			// Capture stdout and redirect logger to it
 			oldStdout := os.Stdout
 			r, w, _ := os.Pipe()
 			os.Stdout = w
+			
+			// Redirect logger output to the pipe
+			logger.SetOutput(w)
 
 			printLowScoreEpisodes(tt.episodes, tt.triggerSearch, tt.instanceName)
 
 			// Restore stdout
 			w.Close()
 			os.Stdout = oldStdout
+			
+			// Restore logger output
+			logger.SetOutput(os.Stdout)
 
 			// Read captured output
 			var buf bytes.Buffer
@@ -292,6 +302,9 @@ func TestPrintLowScoreEpisodes(t *testing.T) {
 }
 
 func TestPrintLowScoreMovies(t *testing.T) {
+	// Initialize logger for testing
+	logger.Init(logger.VERBOSE)
+	
 	tests := []struct {
 		name           string
 		movies         []types.LowScoreMovie
@@ -342,16 +355,22 @@ func TestPrintLowScoreMovies(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Capture stdout
+			// Capture stdout and redirect logger to it
 			oldStdout := os.Stdout
 			r, w, _ := os.Pipe()
 			os.Stdout = w
+			
+			// Redirect logger output to the pipe
+			logger.SetOutput(w)
 
 			printLowScoreMovies(tt.movies, tt.triggerSearch, tt.instanceName)
 
 			// Restore stdout
 			w.Close()
 			os.Stdout = oldStdout
+			
+			// Restore logger output
+			logger.SetOutput(os.Stdout)
 
 			// Read captured output
 			var buf bytes.Buffer

@@ -16,6 +16,7 @@ type Config struct {
 	TriggerSearch   bool          // Whether to actually trigger searches or just report
 	BatchSize       int           // Number of items to check per run
 	Interval        time.Duration // How often to run the check
+	LogLevel        string        // Logging level: ERROR, INFO, DEBUG, VERBOSE
 }
 
 // Series represents a Sonarr series (minimal fields needed)

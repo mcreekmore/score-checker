@@ -35,11 +35,13 @@ func init() {
 	rootCmd.PersistentFlags().Bool("triggersearch", false, "Trigger searches for better versions")
 	rootCmd.PersistentFlags().Int("batchsize", 5, "Number of items to check per run")
 	rootCmd.PersistentFlags().String("interval", "1h", "Interval for daemon mode (e.g., 30m, 1h, 2h30m)")
+	rootCmd.PersistentFlags().String("loglevel", "INFO", "Log level (ERROR, INFO, DEBUG, VERBOSE)")
 
 	// Bind flags to viper
 	_ = viper.BindPFlag("triggersearch", rootCmd.PersistentFlags().Lookup("triggersearch"))
 	_ = viper.BindPFlag("batchsize", rootCmd.PersistentFlags().Lookup("batchsize"))
 	_ = viper.BindPFlag("interval", rootCmd.PersistentFlags().Lookup("interval"))
+	_ = viper.BindPFlag("loglevel", rootCmd.PersistentFlags().Lookup("loglevel"))
 }
 
 func main() {

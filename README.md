@@ -67,6 +67,7 @@ Configuration can be provided via:
 | Trigger Search | `--triggersearch` | `SCORECHECK_TRIGGERSEARCH` | `false` | Actually trigger searches (vs. report only) |
 | Batch Size     | `--batchsize`     | `SCORECHECK_BATCHSIZE`     | `5`     | Items to check per run                      |
 | Interval       | `--interval`      | `SCORECHECK_INTERVAL`      | `1h`    | Daemon mode interval                        |
+| Log Level      | `--loglevel`      | `SCORECHECK_LOGLEVEL`      | `INFO`  | Logging verbosity (ERROR, INFO, DEBUG, VERBOSE) |
 
 **Note**: Sonarr and Radarr instances are configured via the config file only (see below).
 
@@ -97,6 +98,13 @@ radarr:
 triggersearch: false
 batchsize: 5
 interval: "1h"
+
+# Logging level - controls output verbosity
+# ERROR:   Only errors
+# INFO:    Errors and info messages (default)
+# DEBUG:   Errors, info, and debug messages
+# VERBOSE: All messages including detailed output
+loglevel: "INFO"
 ```
 
 **Multiple Instances**: You can configure multiple Sonarr and/or Radarr instances by adding more entries to the respective arrays. Each instance must have a unique name, baseurl, and apikey.
