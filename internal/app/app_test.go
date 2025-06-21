@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"score-checker/internal/config"
 	"score-checker/internal/radarr"
 	"score-checker/internal/sonarr"
 	"score-checker/internal/testhelpers"
@@ -367,12 +368,92 @@ func TestPrintLowScoreMovies(t *testing.T) {
 	}
 }
 
-// Integration test for the RunOnce function
 func TestRunOnceIntegration(t *testing.T) {
-	// This test would require mocking the config.Load() function
-	// which is challenging without dependency injection
-	// In a real-world scenario, we'd refactor RunOnce to accept a config parameter
-	t.Skip("Integration test requires config mocking - would need refactoring for better testability")
+	// The actual RunOnce function is difficult to test in isolation because it depends
+	// on the global config system. This test verifies the function can be called
+	// without panicking, which provides some coverage for the RunOnce function.
+	
+	// Create a temporary config directory
+	tempDir := t.TempDir()
+	configFile := tempDir + "/config.yaml"
+	
+	// Create a minimal config file to avoid loading errors
+	configContent := `
+triggersearch: false
+batchsize: 5
+interval: "1h"
+`
+	
+	err := os.WriteFile(configFile, []byte(configContent), 0644)
+	if err != nil {
+		t.Fatalf("failed to create test config: %v", err)
+	}
+
+	// Set up environment variables for config location
+	oldConfigFile := os.Getenv("SCORECHECK_CONFIG_FILE")
+	oldConfigPath := os.Getenv("SCORECHECK_CONFIG_PATH")
+	defer func() {
+		if oldConfigFile != "" {
+			os.Setenv("SCORECHECK_CONFIG_FILE", oldConfigFile)
+		} else {
+			os.Unsetenv("SCORECHECK_CONFIG_FILE")
+		}
+		if oldConfigPath != "" {
+			os.Setenv("SCORECHECK_CONFIG_PATH", oldConfigPath)
+		} else {
+			os.Unsetenv("SCORECHECK_CONFIG_PATH")
+		}
+	}()
+	
+	os.Setenv("SCORECHECK_CONFIG_PATH", tempDir)
+	os.Setenv("SCORECHECK_CONFIG_FILE", "config")
+
+	// Initialize config system with our test config
+	config.Init()
+
+	// Capture stdout to verify the function runs
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	// This is the main test - calling RunOnce should not panic
+	// and should provide coverage for the RunOnce function
+	RunOnce()
+
+	// Restore stdout
+	w.Close()
+	os.Stdout = oldStdout
+
+	// Read the captured output
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+	output := buf.String()
+
+	// Basic verification that the function ran and produced expected output
+	expectedPatterns := []string{
+		"Search triggering is DISABLED",
+		"Batch size: 5 items per run",
+		"No Sonarr or Radarr instances configured",
+	}
+
+	for _, pattern := range expectedPatterns {
+		if !strings.Contains(output, pattern) {
+			t.Errorf("expected output to contain %q, got: %s", pattern, output)
+		}
+	}
+}
+
+func TestRunDaemonInit(t *testing.T) {
+	// Note: Testing RunDaemon fully is challenging because it runs indefinitely.
+	// This test primarily serves to document the RunDaemon function exists
+	// and could be extended in the future with more sophisticated testing
+	// mechanisms like context cancellation.
+	
+	// For now, we acknowledge that RunDaemon cannot be easily unit tested
+	// without refactoring it to accept a context for cancellation.
+	// The function is primarily tested through integration tests and manual testing.
+	
+	t.Skip("RunDaemon runs indefinitely and requires integration testing")
 }
 
 // Benchmark for findLowScoreEpisodes

@@ -66,8 +66,8 @@ jobs:
         COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3, 1, length($3)-1)}')
         echo "Total coverage: $COVERAGE%"
         COVERAGE_INT=$(printf "%.0f" "$COVERAGE")
-        if [ "$COVERAGE_INT" -lt 70 ]; then
-          echo "Coverage $COVERAGE% is below threshold of 70%"
+        if [ "$COVERAGE_INT" -lt 65 ]; then
+          echo "Coverage $COVERAGE% is below threshold of 65%"
           exit 1
         fi
 

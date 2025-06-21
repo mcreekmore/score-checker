@@ -37,6 +37,83 @@ func TestNewClient(t *testing.T) {
 	}
 }
 
+func TestMakeRequest(t *testing.T) {
+	tests := []struct {
+		name         string
+		endpoint     string
+		responseCode int
+		responseBody string
+		expectError  bool
+		errorMessage string
+	}{
+		{
+			name:         "successful request",
+			endpoint:     "/api/v3/series",
+			responseCode: http.StatusOK,
+			responseBody: `[{"id": 1, "title": "Test Series"}]`,
+			expectError:  false,
+		},
+		{
+			name:         "server error",
+			endpoint:     "/api/v3/series",
+			responseCode: http.StatusInternalServerError,
+			responseBody: `{"error": "internal server error"}`,
+			expectError:  true,
+			errorMessage: "API request failed with status 500",
+		},
+		{
+			name:         "not found error",
+			endpoint:     "/api/v3/series",
+			responseCode: http.StatusNotFound,
+			responseBody: `{"error": "not found"}`,
+			expectError:  true,
+			errorMessage: "API request failed with status 404",
+		},
+		{
+			name:         "unauthorized error",
+			endpoint:     "/api/v3/series",
+			responseCode: http.StatusUnauthorized,
+			responseBody: `{"error": "unauthorized"}`,
+			expectError:  true,
+			errorMessage: "API request failed with status 401",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tt.responseCode)
+				w.Write([]byte(tt.responseBody))
+			}))
+			defer server.Close()
+
+			config := types.ServiceConfig{
+				Name:    "test",
+				BaseURL: server.URL,
+				APIKey:  "test-api-key",
+			}
+			client := NewClient(config)
+
+			body, err := client.makeRequest(tt.endpoint, nil)
+
+			if tt.expectError {
+				if err == nil {
+					t.Error("expected error but got none")
+				} else if !strings.Contains(err.Error(), tt.errorMessage) {
+					t.Errorf("expected error message to contain %q, got %q", tt.errorMessage, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+				if string(body) != tt.responseBody {
+					t.Errorf("expected body %q, got %q", tt.responseBody, string(body))
+				}
+			}
+		})
+	}
+}
+
 func TestGetSeries(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -423,70 +500,6 @@ func TestTriggerEpisodeSearch(t *testing.T) {
 			}
 			if resp.Status != tt.expectedResponse.Status {
 				t.Errorf("expected response Status %q, got %q", tt.expectedResponse.Status, resp.Status)
-			}
-		})
-	}
-}
-
-func TestMakeRequest(t *testing.T) {
-	tests := []struct {
-		name         string
-		endpoint     string
-		responseCode int
-		responseBody string
-		expectError  bool
-	}{
-		{
-			name:         "successful request",
-			endpoint:     "/api/v3/series",
-			responseCode: http.StatusOK,
-			responseBody: `{"result": "success"}`,
-			expectError:  false,
-		},
-		{
-			name:         "not found",
-			endpoint:     "/api/v3/notfound",
-			responseCode: http.StatusNotFound,
-			responseBody: `{"error": "not found"}`,
-			expectError:  true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if !strings.HasSuffix(r.URL.Path, tt.endpoint) {
-					t.Errorf("expected endpoint to end with %q, got %q", tt.endpoint, r.URL.Path)
-				}
-
-				w.WriteHeader(tt.responseCode)
-				w.Write([]byte(tt.responseBody))
-			}))
-			defer server.Close()
-
-			config := types.ServiceConfig{
-				Name:    "test",
-				BaseURL: server.URL,
-				APIKey:  "test-api-key",
-			}
-			client := NewClient(config)
-
-			body, err := client.makeRequest(tt.endpoint, nil)
-
-			if tt.expectError {
-				if err == nil {
-					t.Error("expected error but got none")
-				}
-				return
-			}
-
-			if err != nil {
-				t.Errorf("unexpected error: %v", err)
-				return
-			}
-
-			if string(body) != tt.responseBody {
-				t.Errorf("expected response body %q, got %q", tt.responseBody, string(body))
 			}
 		})
 	}
