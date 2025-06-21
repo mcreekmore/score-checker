@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  score-checker:
+    build: .
+    container_name: score-checker
+    restart: unless-stopped
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+    environment:
+      - SCORECHECK_TRIGGERSEARCH=false
+      - SCORECHECK_BATCHSIZE=5
+      - SCORECHECK_INTERVAL=1h
+    command: ["daemon"]
+    
+  # Example with environment variables instead of config file
+  score-checker-env:
+    build: .
+    container_name: score-checker-env
+    restart: unless-stopped
+    environment:
+      - SCORECHECK_TRIGGERSEARCH=false
+      - SCORECHECK_BATCHSIZE=10
+      - SCORECHECK_INTERVAL=2h
+    command: ["daemon"]
+    profiles: ["env-config"]
+    # Note: This would require refactoring config to support env vars for instances
+
+  # Example for one-time run
+  score-checker-once:
+    build: .
+    container_name: score-checker-once
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+    environment:
+      - SCORECHECK_TRIGGERSEARCH=false
+      - SCORECHECK_BATCHSIZE=20
+    command: []  # Runs once and exits
+    profiles: ["once"]

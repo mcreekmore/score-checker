@@ -1,0 +1,39 @@
+# Ignore Git files
+.git
+.gitignore
+.gitattributes
+
+# Ignore documentation files
+*.md
+TESTING.md
+LICENSE
+
+# Ignore CI/CD files
+.github
+
+# Ignore build artifacts
+score-checker
+score-checker-*
+coverage.out
+coverage.html
+*.test
+
+# Ignore IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore temporary files
+*.tmp
+*.temp
+
+# Ignore node modules (if any)
+node_modules
+
+# Ignore vendor directory
+vendor

@@ -1,0 +1,114 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  GO_VERSION: '1.24.4'
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Run tests
+      run: go test -v ./...
+
+    - name: Build binaries
+      run: |
+        mkdir -p dist
+        
+        # Linux AMD64
+        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o dist/score-checker-linux-amd64 ./cmd/score-checker
+        
+        # Linux ARM64
+        CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags="-w -s" -o dist/score-checker-linux-arm64 ./cmd/score-checker
+        
+        # macOS AMD64
+        CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-w -s" -o dist/score-checker-darwin-amd64 ./cmd/score-checker
+        
+        # macOS ARM64 (Apple Silicon)
+        CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="-w -s" -o dist/score-checker-darwin-arm64 ./cmd/score-checker
+        
+        # Windows AMD64
+        CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-w -s" -o dist/score-checker-windows-amd64.exe ./cmd/score-checker
+
+    - name: Create checksums
+      run: |
+        cd dist
+        sha256sum * > checksums.txt
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Get the previous tag
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+        
+        # Generate changelog
+        if [ -n "$PREVIOUS_TAG" ]; then
+          echo "## Changes since $PREVIOUS_TAG" > CHANGELOG.md
+          git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD >> CHANGELOG.md
+        else
+          echo "## Initial Release" > CHANGELOG.md
+          echo "- First release of score-checker" >> CHANGELOG.md
+        fi
+        
+        # Set output for use in release
+        echo "changelog<<EOF" >> $GITHUB_OUTPUT
+        cat CHANGELOG.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        body: |
+          ${{ steps.changelog.outputs.changelog }}
+          
+          ## Docker Images
+          
+          The Docker images for this release are available at:
+          - `ghcr.io/${{ github.repository }}:${{ github.ref_name }}`
+          - `ghcr.io/${{ github.repository }}:latest`
+          
+          ## Installation
+          
+          ### Binary Downloads
+          Download the appropriate binary for your platform from the assets below.
+          
+          ### Docker
+          ```bash
+          docker pull ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+          ```
+          
+          ### Verify Downloads
+          ```bash
+          sha256sum -c checksums.txt
+          ```
+          
+        draft: false
+        prerelease: ${{ contains(github.ref_name, '-') }}
+        files: |
+          dist/score-checker-linux-amd64
+          dist/score-checker-linux-arm64
+          dist/score-checker-darwin-amd64
+          dist/score-checker-darwin-arm64
+          dist/score-checker-windows-amd64.exe
+          dist/checksums.txt
+        token: ${{ secrets.GITHUB_TOKEN }}
