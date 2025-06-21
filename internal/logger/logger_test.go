@@ -2,6 +2,7 @@ package logger
 
 import (
 	"bytes"
+	"os"
 	"strings"
 	"testing"
 )
@@ -198,5 +199,85 @@ func TestUninitializedLogger(t *testing.T) {
 	level := GetLevel()
 	if level != "INFO" {
 		t.Errorf("GetLevel() for uninitialized logger = %q, want %q", level, "INFO")
+	}
+}
+
+func TestInitWithFile(t *testing.T) {
+	// Create a temporary directory for testing
+	tempDir := t.TempDir()
+	
+	// Initialize logger with file output
+	err := InitWithFile(INFO, tempDir)
+	if err != nil {
+		t.Fatalf("InitWithFile failed: %v", err)
+	}
+	
+	// Verify logger was created
+	if defaultLogger == nil {
+		t.Fatal("defaultLogger should not be nil after InitWithFile")
+	}
+	
+	if defaultLogger.logFile == nil {
+		t.Fatal("logFile should not be nil after InitWithFile")
+	}
+	
+	// Test logging to file
+	Info("test file logging")
+	
+	// Close the logger
+	err = Close()
+	if err != nil {
+		t.Errorf("Close() failed: %v", err)
+	}
+	
+	// Verify log file was created and contains content
+	logFilePath := tempDir + "/score-checker.log"
+	content, err := os.ReadFile(logFilePath)
+	if err != nil {
+		t.Fatalf("Failed to read log file: %v", err)
+	}
+	
+	if !strings.Contains(string(content), "test file logging") {
+		t.Errorf("Log file should contain test message, got: %s", string(content))
+	}
+	
+	if !strings.Contains(string(content), "INFO:") {
+		t.Errorf("Log file should contain INFO prefix, got: %s", string(content))
+	}
+}
+
+func TestInitFromStringWithFile(t *testing.T) {
+	// Create a temporary directory for testing
+	tempDir := t.TempDir()
+	
+	// Test with different log levels
+	tests := []string{"ERROR", "INFO", "DEBUG", "VERBOSE"}
+	
+	for _, level := range tests {
+		t.Run(level, func(t *testing.T) {
+			err := InitFromStringWithFile(level, tempDir)
+			if err != nil {
+				t.Fatalf("InitFromStringWithFile failed for level %s: %v", level, err)
+			}
+			
+			if defaultLogger == nil {
+				t.Fatal("defaultLogger should not be nil")
+			}
+			
+			if GetLevel() != level {
+				t.Errorf("expected level %s, got %s", level, GetLevel())
+			}
+			
+			// Clean up
+			Close()
+		})
+	}
+}
+
+func TestFileLoggingPermissionDenied(t *testing.T) {
+	// Try to initialize with a non-existent directory that we can't create
+	err := InitWithFile(INFO, "/nonexistent/readonly/path")
+	if err == nil {
+		t.Error("InitWithFile should fail with permission denied")
 	}
 }

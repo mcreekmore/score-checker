@@ -104,10 +104,45 @@ interval: "1h"
 # INFO:    Errors and info messages (default)
 # DEBUG:   Errors, info, and debug messages
 # VERBOSE: All messages including detailed output
+# Logs are written to both console and a log file (score-checker.log)
+# in the same directory as the config file
 loglevel: "INFO"
 ```
 
 **Multiple Instances**: You can configure multiple Sonarr and/or Radarr instances by adding more entries to the respective arrays. Each instance must have a unique name, baseurl, and apikey.
+
+## Logging
+
+The application supports configurable logging with both console and file output:
+
+- **Console Output**: All logs are displayed on the console with timestamps and level prefixes
+- **File Output**: Logs are also written to `score-checker.log` in the same directory as the config file
+- **Log Levels**: Choose from ERROR, INFO, DEBUG, or VERBOSE for different levels of detail
+- **Automatic Fallback**: If file logging fails (e.g., permission issues), the application continues with console-only logging
+
+### Log File Locations
+
+| Config File Location | Log File Location |
+| -------------------- | ----------------- |
+| `/etc/score-checker/config.yaml` | `/etc/score-checker/score-checker.log` |
+| `./config.yaml` | `./score-checker.log` |
+| No config file | `./score-checker.log` |
+
+### Log Level Examples
+
+```bash
+# Minimal logging - only errors
+./score-checker --loglevel ERROR
+
+# Standard logging - errors and general info (default)
+./score-checker --loglevel INFO
+
+# Debug logging - includes processing details
+./score-checker --loglevel DEBUG
+
+# Verbose logging - includes all found episodes/movies
+./score-checker --loglevel VERBOSE
+```
 
 ## Usage
 

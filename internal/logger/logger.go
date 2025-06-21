@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -28,6 +29,7 @@ type Logger struct {
 	debugLogger   *log.Logger
 	verboseLogger *log.Logger
 	level         LogLevel
+	logFile       *os.File // Keep reference to close later
 }
 
 var defaultLogger *Logger
@@ -45,10 +47,56 @@ func Init(level LogLevel) {
 	}
 }
 
+// InitWithFile initializes the global logger with file and console output
+func InitWithFile(level LogLevel, logDir string) error {
+	flags := log.Ldate | log.Ltime | log.Lmicroseconds
+	
+	// Create log directory if it doesn't exist
+	if err := os.MkdirAll(logDir, 0755); err != nil {
+		return err
+	}
+	
+	// Open log file
+	logFilePath := filepath.Join(logDir, "score-checker.log")
+	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return err
+	}
+	
+	// Create multi-writers for both console and file output
+	errorWriter := io.MultiWriter(os.Stderr, logFile)
+	infoWriter := io.MultiWriter(os.Stdout, logFile)
+	
+	defaultLogger = &Logger{
+		errorLogger:   log.New(errorWriter, "ERROR: ", flags),
+		infoLogger:    log.New(infoWriter, "INFO:  ", flags),
+		debugLogger:   log.New(infoWriter, "DEBUG: ", flags),
+		verboseLogger: log.New(infoWriter, "VERBOSE: ", flags),
+		level:         level,
+		logFile:       logFile,
+	}
+	
+	return nil
+}
+
 // InitFromString initializes the logger from a string level
 func InitFromString(levelStr string) {
 	level := parseLogLevel(levelStr)
 	Init(level)
+}
+
+// InitFromStringWithFile initializes the logger from a string level with file output
+func InitFromStringWithFile(levelStr string, logDir string) error {
+	level := parseLogLevel(levelStr)
+	return InitWithFile(level, logDir)
+}
+
+// Close closes the log file if it was opened
+func Close() error {
+	if defaultLogger != nil && defaultLogger.logFile != nil {
+		return defaultLogger.logFile.Close()
+	}
+	return nil
 }
 
 // parseLogLevel converts string to LogLevel

@@ -2,12 +2,16 @@ package main
 
 import (
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"score-checker/internal/app"
 	"score-checker/internal/config"
+	"score-checker/internal/logger"
 )
 
 var rootCmd = &cobra.Command{
@@ -15,6 +19,7 @@ var rootCmd = &cobra.Command{
 	Short: "Check Sonarr/Radarr episodes/movies for low custom format scores",
 	Long:  `A microservice that checks Sonarr episodes and Radarr movies for low custom format scores and optionally triggers searches for better versions.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		defer logger.Close()
 		app.RunOnce()
 	},
 }
@@ -24,6 +29,18 @@ var daemonCmd = &cobra.Command{
 	Short: "Run as a daemon with periodic checks",
 	Long:  `Run the score checker as a daemon that performs periodic checks at the configured interval.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		defer logger.Close()
+		
+		// Set up signal handling for graceful shutdown
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		go func() {
+			<-c
+			logger.Info("Received shutdown signal, closing log file...")
+			logger.Close()
+			os.Exit(0)
+		}()
+		
 		app.RunDaemon()
 	},
 }

@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"path/filepath"
 	"time"
 
 	"github.com/spf13/viper"
@@ -46,8 +47,22 @@ func Load() types.Config {
 
 	logLevel := viper.GetString("loglevel")
 	
-	// Initialize logger with the configured level
-	logger.InitFromString(logLevel)
+	// Determine log directory based on config file location
+	var logDir string
+	if configFile := viper.ConfigFileUsed(); configFile != "" {
+		// Use the directory where the config file is located
+		logDir = filepath.Dir(configFile)
+	} else {
+		// Default to current directory if no config file
+		logDir = "."
+	}
+	
+	// Initialize logger with file and console output
+	if err := logger.InitFromStringWithFile(logLevel, logDir); err != nil {
+		// Fallback to console-only logging if file logging fails
+		fmt.Printf("Warning: Failed to initialize file logging: %v\n", err)
+		logger.InitFromString(logLevel)
+	}
 	
 	config := types.Config{
 		TriggerSearch: viper.GetBool("triggersearch"),
