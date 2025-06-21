@@ -24,7 +24,7 @@ func Init() {
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("/etc/score-checker/")
-	viper.ReadInConfig() // ignore error
+	_ = viper.ReadInConfig() // ignore error
 }
 
 // Load loads configuration using Viper

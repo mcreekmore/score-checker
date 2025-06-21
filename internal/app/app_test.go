@@ -278,7 +278,7 @@ func TestPrintLowScoreEpisodes(t *testing.T) {
 
 			// Read captured output
 			var buf bytes.Buffer
-			io.Copy(&buf, r)
+			_, _ = io.Copy(&buf, r)
 			output := buf.String()
 
 			// Check that all expected strings are present
@@ -355,7 +355,7 @@ func TestPrintLowScoreMovies(t *testing.T) {
 
 			// Read captured output
 			var buf bytes.Buffer
-			io.Copy(&buf, r)
+			_, _ = io.Copy(&buf, r)
 			output := buf.String()
 
 			// Check that all expected strings are present
@@ -426,7 +426,7 @@ interval: "1h"
 
 	// Read the captured output
 	var buf bytes.Buffer
-	io.Copy(&buf, r)
+	_, _ = io.Copy(&buf, r)
 	output := buf.String()
 
 	// Basic verification that the function ran and produced expected output

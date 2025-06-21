@@ -26,7 +26,7 @@ func MockSonarrServer(t TestingInterface, series []types.Series, episodes map[in
 				w.WriteHeader(http.StatusMethodNotAllowed)
 				return
 			}
-			json.NewEncoder(w).Encode(series)
+			_ = json.NewEncoder(w).Encode(series)
 
 		case "/api/v3/episode":
 			if r.Method != "GET" {
@@ -51,9 +51,9 @@ func MockSonarrServer(t TestingInterface, series []types.Series, episodes map[in
 			}
 
 			if eps, ok := episodes[seriesID]; ok {
-				json.NewEncoder(w).Encode(eps)
+				_ = json.NewEncoder(w).Encode(eps)
 			} else {
-				json.NewEncoder(w).Encode([]types.Episode{})
+				_ = json.NewEncoder(w).Encode([]types.Episode{})
 			}
 
 		case "/api/v3/command":
@@ -63,7 +63,7 @@ func MockSonarrServer(t TestingInterface, series []types.Series, episodes map[in
 			}
 			if commandResponse != nil {
 				w.WriteHeader(http.StatusCreated)
-				json.NewEncoder(w).Encode(commandResponse)
+				_ = json.NewEncoder(w).Encode(commandResponse)
 			} else {
 				w.WriteHeader(http.StatusBadRequest)
 			}
@@ -85,7 +85,7 @@ func MockRadarrServer(t TestingInterface, movies []types.MovieWithFile, commandR
 				w.WriteHeader(http.StatusMethodNotAllowed)
 				return
 			}
-			json.NewEncoder(w).Encode(movies)
+			_ = json.NewEncoder(w).Encode(movies)
 
 		case "/api/v3/command":
 			if r.Method != "POST" {
@@ -94,7 +94,7 @@ func MockRadarrServer(t TestingInterface, movies []types.MovieWithFile, commandR
 			}
 			if commandResponse != nil {
 				w.WriteHeader(http.StatusCreated)
-				json.NewEncoder(w).Encode(commandResponse)
+				_ = json.NewEncoder(w).Encode(commandResponse)
 			} else {
 				w.WriteHeader(http.StatusBadRequest)
 			}

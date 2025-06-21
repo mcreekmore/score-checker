@@ -83,7 +83,7 @@ func TestMakeRequest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tt.responseCode)
-				w.Write([]byte(tt.responseBody))
+				_, _ = w.Write([]byte(tt.responseBody))
 			}))
 			defer server.Close()
 
@@ -172,7 +172,7 @@ func TestGetSeries(t *testing.T) {
 				}
 
 				w.WriteHeader(tt.responseCode)
-				w.Write([]byte(tt.responseBody))
+				_, _ = w.Write([]byte(tt.responseBody))
 			}))
 			defer server.Close()
 
@@ -292,7 +292,7 @@ func TestGetEpisodes(t *testing.T) {
 				}
 
 				w.WriteHeader(tt.responseCode)
-				w.Write([]byte(tt.responseBody))
+				_, _ = w.Write([]byte(tt.responseBody))
 			}))
 			defer server.Close()
 
@@ -454,7 +454,7 @@ func TestTriggerEpisodeSearch(t *testing.T) {
 					}
 
 					w.WriteHeader(tt.responseCode)
-					w.Write([]byte(tt.responseBody))
+					_, _ = w.Write([]byte(tt.responseBody))
 				}))
 				defer server.Close()
 			}

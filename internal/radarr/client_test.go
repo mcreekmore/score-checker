@@ -124,7 +124,7 @@ func TestGetMovies(t *testing.T) {
 				}
 
 				w.WriteHeader(tt.responseCode)
-				w.Write([]byte(tt.responseBody))
+				_, _ = w.Write([]byte(tt.responseBody))
 			}))
 			defer server.Close()
 
@@ -301,7 +301,7 @@ func TestTriggerMovieSearch(t *testing.T) {
 					}
 
 					w.WriteHeader(tt.responseCode)
-					w.Write([]byte(tt.responseBody))
+					_, _ = w.Write([]byte(tt.responseBody))
 				}))
 				defer server.Close()
 			}
@@ -391,7 +391,7 @@ func TestMakeRequest(t *testing.T) {
 				}
 
 				w.WriteHeader(tt.responseCode)
-				w.Write([]byte(tt.responseBody))
+				_, _ = w.Write([]byte(tt.responseBody))
 			}))
 			defer server.Close()
 
