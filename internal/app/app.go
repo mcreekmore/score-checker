@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"score-checker/internal/config"
+	"score-checker/internal/constants"
 	"score-checker/internal/radarr"
 	"score-checker/internal/sonarr"
 	"score-checker/internal/types"
@@ -66,7 +67,7 @@ func findLowScoreEpisodes(client *sonarr.Client, cfg types.Config, instanceName 
 		slog.Info(fmt.Sprintf("[%s] Triggering search for %d episode(s) with low scores...", instanceName, len(episodesToSearch)))
 
 		// Search in batches to avoid overwhelming the system
-		batchSize := 10
+		batchSize := constants.DefaultSearchBatchSize
 		for i := 0; i < len(episodesToSearch); i += batchSize {
 			end := min(i+batchSize, len(episodesToSearch))
 
@@ -129,7 +130,7 @@ func findLowScoreMovies(client *radarr.Client, cfg types.Config, instanceName st
 		slog.Info(fmt.Sprintf("[%s] Triggering search for %d movie(s) with low scores...", instanceName, len(moviesToSearch)))
 
 		// Search in batches to avoid overwhelming the system
-		batchSize := 10
+		batchSize := constants.DefaultSearchBatchSize
 		for i := 0; i < len(moviesToSearch); i += batchSize {
 			end := min(i+batchSize, len(moviesToSearch))
 
