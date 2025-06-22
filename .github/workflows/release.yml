@@ -68,12 +68,10 @@ jobs:
           echo "- First release of score-checker" >> CHANGELOG.md
         fi
         
-        # Set output for use in release - using unique delimiter
-        {
-          echo "changelog<<CHANGELOG_DELIMITER_12345"
-          cat CHANGELOG.md
-          echo "CHANGELOG_DELIMITER_12345"
-        } >> $GITHUB_OUTPUT
+        # Set output for use in release
+        echo "changelog<<EOF" >> $GITHUB_OUTPUT
+        cat CHANGELOG.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
