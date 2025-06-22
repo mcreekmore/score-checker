@@ -67,11 +67,7 @@ jobs:
           echo "## Initial Release" > CHANGELOG.md
           echo "- First release of score-checker" >> CHANGELOG.md
         fi
-        
-        # Set output for use in release
-        echo "changelog<<EOF" >> $GITHUB_OUTPUT
-        cat CHANGELOG.md >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+        echo "changelog=$(cat CHANGELOG.md | jq -Rs .)" >> $GITHUB_OUTPUT
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
