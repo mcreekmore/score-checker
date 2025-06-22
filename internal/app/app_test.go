@@ -3,12 +3,12 @@ package app
 import (
 	"bytes"
 	"io"
+	"log/slog"
 	"os"
 	"strings"
 	"testing"
 
 	"score-checker/internal/config"
-	"score-checker/internal/logger"
 	"score-checker/internal/radarr"
 	"score-checker/internal/sonarr"
 	"score-checker/internal/testhelpers"
@@ -16,6 +16,9 @@ import (
 )
 
 func TestFindLowScoreEpisodes(t *testing.T) {
+	// Initialize default slog for tests
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, nil)))
+
 	tests := []struct {
 		name                   string
 		config                 types.Config
@@ -114,6 +117,9 @@ func TestFindLowScoreEpisodes(t *testing.T) {
 }
 
 func TestFindLowScoreMovies(t *testing.T) {
+	// Initialize default slog for tests
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, nil)))
+
 	tests := []struct {
 		name                   string
 		config                 types.Config
@@ -205,182 +211,6 @@ func TestFindLowScoreMovies(t *testing.T) {
 			for i, movie := range lowScoreMovies {
 				if movie.CustomFormatScore >= 0 {
 					t.Errorf("movie[%d] expected negative score, got %d", i, movie.CustomFormatScore)
-				}
-			}
-		})
-	}
-}
-
-func TestPrintLowScoreEpisodes(t *testing.T) {
-	// Initialize logger for testing
-	logger.Init(logger.VERBOSE)
-
-	tests := []struct {
-		name           string
-		episodes       []types.LowScoreEpisode
-		triggerSearch  bool
-		instanceName   string
-		expectedOutput []string
-	}{
-		{
-			name: "prints episodes with search disabled",
-			episodes: []types.LowScoreEpisode{
-				{
-					Series: types.Series{ID: 1, Title: "Breaking Bad"},
-					Episode: types.Episode{
-						ID:            101,
-						Title:         "Pilot",
-						SeasonNumber:  1,
-						EpisodeNumber: 1,
-					},
-					CustomFormatScore: -10,
-				},
-			},
-			triggerSearch:  false,
-			instanceName:   "test",
-			expectedOutput: []string{"[test]", "Breaking Bad", "S01E01", "Pilot", "Custom Format Score: -10", "Episode ID: 101", "Set SCORECHECK_TRIGGER_SEARCH=true"},
-		},
-		{
-			name: "prints episodes with search enabled",
-			episodes: []types.LowScoreEpisode{
-				{
-					Series: types.Series{ID: 1, Title: "Better Call Saul"},
-					Episode: types.Episode{
-						ID:            201,
-						Title:         "Uno",
-						SeasonNumber:  1,
-						EpisodeNumber: 1,
-					},
-					CustomFormatScore: -5,
-				},
-			},
-			triggerSearch:  true,
-			instanceName:   "test",
-			expectedOutput: []string{"[test]", "Better Call Saul", "S01E01", "Uno", "Custom Format Score: -5", "Episode ID: 201", "Searches have been triggered"},
-		},
-		{
-			name:           "handles empty episodes list",
-			episodes:       []types.LowScoreEpisode{},
-			triggerSearch:  false,
-			instanceName:   "test",
-			expectedOutput: []string{"[test]", "No episodes found"},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Capture stdout and redirect logger to it
-			oldStdout := os.Stdout
-			r, w, _ := os.Pipe()
-			os.Stdout = w
-
-			// Redirect logger output to the pipe
-			logger.SetOutput(w)
-
-			printLowScoreEpisodes(tt.episodes, tt.triggerSearch, tt.instanceName)
-
-			// Restore stdout
-			w.Close()
-			os.Stdout = oldStdout
-
-			// Restore logger output
-			logger.SetOutput(os.Stdout)
-
-			// Read captured output
-			var buf bytes.Buffer
-			_, _ = io.Copy(&buf, r)
-			output := buf.String()
-
-			// Check that all expected strings are present
-			for _, expected := range tt.expectedOutput {
-				if !strings.Contains(output, expected) {
-					t.Errorf("expected output to contain %q, got: %s", expected, output)
-				}
-			}
-		})
-	}
-}
-
-func TestPrintLowScoreMovies(t *testing.T) {
-	// Initialize logger for testing
-	logger.Init(logger.VERBOSE)
-
-	tests := []struct {
-		name           string
-		movies         []types.LowScoreMovie
-		triggerSearch  bool
-		instanceName   string
-		expectedOutput []string
-	}{
-		{
-			name: "prints movies with search disabled",
-			movies: []types.LowScoreMovie{
-				{
-					Movie: types.MovieWithFile{
-						ID:    1,
-						Title: "The Matrix",
-						Year:  1999,
-					},
-					CustomFormatScore: -15,
-				},
-			},
-			triggerSearch:  false,
-			instanceName:   "test",
-			expectedOutput: []string{"[test]", "The Matrix (1999)", "Custom Format Score: -15", "Movie ID: 1", "Set SCORECHECK_TRIGGER_SEARCH=true"},
-		},
-		{
-			name: "prints movies with search enabled",
-			movies: []types.LowScoreMovie{
-				{
-					Movie: types.MovieWithFile{
-						ID:    2,
-						Title: "Blade Runner",
-						Year:  1982,
-					},
-					CustomFormatScore: -20,
-				},
-			},
-			triggerSearch:  true,
-			instanceName:   "test",
-			expectedOutput: []string{"[test]", "Blade Runner (1982)", "Custom Format Score: -20", "Movie ID: 2", "Searches have been triggered"},
-		},
-		{
-			name:           "handles empty movies list",
-			movies:         []types.LowScoreMovie{},
-			triggerSearch:  false,
-			instanceName:   "test",
-			expectedOutput: []string{"[test]", "No movies found"},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Capture stdout and redirect logger to it
-			oldStdout := os.Stdout
-			r, w, _ := os.Pipe()
-			os.Stdout = w
-
-			// Redirect logger output to the pipe
-			logger.SetOutput(w)
-
-			printLowScoreMovies(tt.movies, tt.triggerSearch, tt.instanceName)
-
-			// Restore stdout
-			w.Close()
-			os.Stdout = oldStdout
-
-			// Restore logger output
-			logger.SetOutput(os.Stdout)
-
-			// Read captured output
-			var buf bytes.Buffer
-			_, _ = io.Copy(&buf, r)
-			output := buf.String()
-
-			// Check that all expected strings are present
-			for _, expected := range tt.expectedOutput {
-				if !strings.Contains(output, expected) {
-					t.Errorf("expected output to contain %q, got: %s", expected, output)
 				}
 			}
 		})

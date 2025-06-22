@@ -1,16 +1,78 @@
 package config
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"log"
+	"log/slog"
+	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/spf13/viper"
 
-	"score-checker/internal/logger"
 	"score-checker/internal/types"
 )
+
+// customHandler implements a simple log format: "2024/01/03 10:24:22 INFO Info message"
+type customHandler struct {
+	writer io.Writer
+	level  slog.Level
+}
+
+func (h *customHandler) Enabled(_ context.Context, level slog.Level) bool {
+	return level >= h.level
+}
+
+func (h *customHandler) Handle(_ context.Context, r slog.Record) error {
+	timestamp := r.Time.Format("2006/01/02 15:04:05")
+	level := r.Level.String()
+	message := r.Message
+
+	line := fmt.Sprintf("%s %s %s\n", timestamp, level, message)
+	_, err := h.writer.Write([]byte(line))
+	return err
+}
+
+func (h *customHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	return h
+}
+
+func (h *customHandler) WithGroup(name string) slog.Handler {
+	return h
+}
+
+// initLogger initializes slog with console output and custom format
+func initLogger() {
+	handler := &customHandler{
+		writer: os.Stdout,
+		level:  slog.LevelDebug,
+	}
+	slog.SetDefault(slog.New(handler))
+}
+
+// initLoggerWithFile initializes slog with file and console output
+func initLoggerWithFile(logDir string) error {
+	if err := os.MkdirAll(logDir, 0755); err != nil {
+		return err
+	}
+
+	logFilePath := filepath.Join(logDir, "score-checker.log")
+	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return err
+	}
+
+	multiWriter := io.MultiWriter(os.Stdout, logFile)
+	handler := &customHandler{
+		writer: multiWriter,
+		level:  slog.LevelDebug,
+	}
+	slog.SetDefault(slog.New(handler))
+
+	return nil
+}
 
 // Init initializes the configuration system
 func Init() {
@@ -58,10 +120,10 @@ func Load() types.Config {
 	}
 
 	// Initialize logger with file and console output
-	if err := logger.InitFromStringWithFile(logLevel, logDir); err != nil {
+	if err := initLoggerWithFile(logDir); err != nil {
 		// Fallback to console-only logging if file logging fails
 		fmt.Printf("Warning: Failed to initialize file logging: %v\n", err)
-		logger.InitFromString(logLevel)
+		initLogger()
 	}
 
 	config := types.Config{
