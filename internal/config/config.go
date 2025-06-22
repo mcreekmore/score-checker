@@ -130,7 +130,7 @@ func generateInstanceName(index int) string {
 	return "instance" + string(rune('0'+index))
 }
 
-func parseServiceInstance(instance map[string]interface{}, index int, serviceName string) types.ServiceConfig {
+func parseServiceInstance(instance map[string]any, index int, serviceName string) types.ServiceConfig {
 	name, ok := instance["name"].(string)
 	if !ok {
 		name = generateInstanceName(index)
@@ -155,7 +155,7 @@ func parseServiceInstance(instance map[string]interface{}, index int, serviceNam
 
 func loadServiceInstances(key, serviceName string) []types.ServiceConfig {
 	var instances []types.ServiceConfig
-	var serviceConfig []map[string]interface{}
+	var serviceConfig []map[string]any
 
 	if err := viper.UnmarshalKey(key, &serviceConfig); err == nil {
 		for i, instance := range serviceConfig {
