@@ -1,7 +1,11 @@
 package config
 
 import (
+	"bytes"
+	"context"
+	"log/slog"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -257,6 +261,106 @@ func TestLoadEmptyInstanceArrays(t *testing.T) {
 	}
 	if len(cfg.RadarrInstances) != 0 {
 		t.Errorf("expected 0 Radarr instances, got %d", len(cfg.RadarrInstances))
+	}
+}
+
+func TestCustomHandler(t *testing.T) {
+	var buf bytes.Buffer
+	handler := &customHandler{
+		writer: &buf,
+		level:  slog.LevelDebug,
+	}
+
+	ctx := context.Background()
+
+	// Test Enabled method
+	if !handler.Enabled(ctx, slog.LevelInfo) {
+		t.Error("expected handler to be enabled for INFO level")
+	}
+	if !handler.Enabled(ctx, slog.LevelError) {
+		t.Error("expected handler to be enabled for ERROR level")
+	}
+	if !handler.Enabled(ctx, slog.LevelDebug) {
+		t.Error("expected handler to be enabled for DEBUG level")
+	}
+
+	// Test Handle method
+	record := slog.NewRecord(time.Date(2024, 1, 3, 10, 24, 22, 0, time.UTC), slog.LevelInfo, "Test message", 0)
+	err := handler.Handle(ctx, record)
+	if err != nil {
+		t.Errorf("unexpected error handling log record: %v", err)
+	}
+
+	output := buf.String()
+	expectedParts := []string{
+		"2024/01/03 10:24:22",
+		"INFO",
+		"Test message",
+	}
+
+	for _, part := range expectedParts {
+		if !strings.Contains(output, part) {
+			t.Errorf("expected output to contain %q, got: %s", part, output)
+		}
+	}
+
+	// Test WithAttrs and WithGroup (they just return the handler)
+	newHandler := handler.WithAttrs([]slog.Attr{})
+	if newHandler != handler {
+		t.Error("expected WithAttrs to return the same handler")
+	}
+
+	newHandler = handler.WithGroup("test")
+	if newHandler != handler {
+		t.Error("expected WithGroup to return the same handler")
+	}
+}
+
+func TestInitLogger(t *testing.T) {
+	// This test verifies that initLogger doesn't panic and sets up slog
+	originalLogger := slog.Default()
+	defer slog.SetDefault(originalLogger)
+
+	initLogger()
+
+	// Test that we can log something without panicking
+	slog.Info("test message")
+}
+
+func TestInitLoggerWithFile(t *testing.T) {
+	// Test successful file logger initialization
+	tempDir := t.TempDir()
+
+	err := initLoggerWithFile(tempDir)
+	if err != nil {
+		t.Errorf("unexpected error initializing logger with file: %v", err)
+	}
+
+	// Verify log file was created
+	logFile := tempDir + "/score-checker.log"
+	if _, err := os.Stat(logFile); os.IsNotExist(err) {
+		t.Error("expected log file to be created")
+	}
+
+	// Test that we can log to the file
+	slog.Info("test log message")
+
+	// Check if the log was written
+	content, err := os.ReadFile(logFile)
+	if err != nil {
+		t.Errorf("failed to read log file: %v", err)
+	}
+
+	if !strings.Contains(string(content), "test log message") {
+		t.Error("expected log file to contain test message")
+	}
+}
+
+func TestInitLoggerWithFileError(t *testing.T) {
+	// Test error case - try to create log in non-existent directory without permissions
+	err := initLoggerWithFile("/nonexistent/readonly/path")
+	if err == nil {
+		t.Error("expected error when trying to create log directory with no permissions")
 	}
 }
 

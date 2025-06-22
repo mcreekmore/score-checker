@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"time"
 
 	"score-checker/internal/types"
 )
@@ -211,6 +212,8 @@ func CreateTestConfig() types.Config {
 		},
 		TriggerSearch: false,
 		BatchSize:     5,
+		Interval:      time.Hour,
+		LogLevel:      "INFO",
 	}
 }
 
