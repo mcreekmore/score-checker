@@ -66,6 +66,18 @@ func TestFindLowScoreEpisodes(t *testing.T) {
 			expectCommandTriggered: false,
 		},
 		{
+			name: "triggers search when batch limit reached",
+			config: types.Config{
+				TriggerSearch: true,
+				BatchSize:     1,
+			},
+			instanceName:           "test",
+			series:                 testhelpers.CreateTestSeries(),
+			episodes:               testhelpers.CreateTestEpisodes(),
+			expectedLowScoreCount:  1, // limited by batch size but should still trigger search
+			expectCommandTriggered: true,
+		},
+		{
 			name: "handles empty series list",
 			config: types.Config{
 				TriggerSearch: false,
@@ -161,6 +173,17 @@ func TestFindLowScoreMovies(t *testing.T) {
 			movies:                 testhelpers.CreateTestMovies(),
 			expectedLowScoreCount:  1,
 			expectCommandTriggered: false,
+		},
+		{
+			name: "triggers search when batch limit reached",
+			config: types.Config{
+				TriggerSearch: true,
+				BatchSize:     1,
+			},
+			instanceName:           "test",
+			movies:                 testhelpers.CreateTestMovies(),
+			expectedLowScoreCount:  1, // limited by batch size but should still trigger search
+			expectCommandTriggered: true,
 		},
 		{
 			name: "handles empty movies list",

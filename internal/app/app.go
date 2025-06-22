@@ -27,7 +27,12 @@ func findLowScoreEpisodes(client *sonarr.Client, cfg types.Config, instanceName 
 
 	// Check each series
 	processedCount := 0
+	reachedLimit := false
 	for _, s := range series {
+		if reachedLimit {
+			break
+		}
+
 		slog.Debug(fmt.Sprintf("[%s] Checking series: %s (ID: %d)", instanceName, s.Title, s.ID))
 
 		episodes, err := client.GetEpisodes(s.ID)
@@ -55,7 +60,8 @@ func findLowScoreEpisodes(client *sonarr.Client, cfg types.Config, instanceName 
 					// Stop if we've reached the batch limit
 					if cfg.BatchSize > 0 && processedCount >= cfg.BatchSize {
 						slog.Info(fmt.Sprintf("[%s] Reached batch limit of %d episodes", instanceName, cfg.BatchSize))
-						return lowScoreEpisodes, nil
+						reachedLimit = true
+						break
 					}
 				}
 			}
