@@ -72,52 +72,6 @@ loglevel: "INFO" # INFO, ERROR, DEBUG, VERBOSE
 
 ## Usage
 
-### Run Once
-
-Check items once and exit:
-
-```bash
-# Check all configured instances
-./score-checker
-
-# Process 10 items and trigger searches
-./score-checker --batchsize 10 --triggersearch
-```
-
-### Daemon Mode
-
-Run continuously with scheduled checks:
-
-```bash
-# Run daemon with config file
-./score-checker daemon
-
-# Run daemon with custom interval
-./score-checker daemon --interval 30m
-```
-
-### Docker
-
-```bash
-# Run once with config file
-docker run --rm -v $(pwd)/config.yaml:/app/config.yaml ghcr.io/mcreekmore/score-checker:latest
-
-# Run as daemon
-docker run -d --restart unless-stopped \
-  -v $(pwd)/config.yaml:/app/config.yaml \
-  --name score-checker \
-  ghcr.io/mcreekmore/score-checker:latest daemon
-
-# Run with environment variables
-docker run -d --restart unless-stopped \
-  -e SCORECHECK_BATCHSIZE=10 \
-  -e SCORECHECK_INTERVAL=2h \
-  -e SCORECHECK_TRIGGERSEARCH=true \
-  -v $(pwd)/config.yaml:/app/config.yaml \
-  --name score-checker \
-  ghcr.io/mcreekmore/score-checker:latest daemon
-```
-
 ### Docker Compose
 
 ```yaml
