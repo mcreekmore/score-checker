@@ -269,7 +269,10 @@ func TestInitFromStringWithFile(t *testing.T) {
 			}
 
 			// Clean up
-			Close()
+			err = Close()
+			if err != nil {
+				t.Errorf("failed to close logger: %v", err)
+			}
 		})
 	}
 }
