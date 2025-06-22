@@ -49,11 +49,18 @@ jobs:
         CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-w -s" -o dist/score-checker-windows-amd64.exe ./cmd/score-checker
 
 
+    - name: "Get previous tag"
+      id: previous-tag
+      run: |
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+        echo "tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+
     - name: "Generate release changelog"
       id: changelog
       uses: janheinrichmerker/action-github-changelog-generator@v2.3
       with:
         token: ${{ secrets.GITHUB_TOKEN }} 
+        sinceTag: ${{ steps.previous-tag.outputs.tag }}
 
 
     - name: Create Release
