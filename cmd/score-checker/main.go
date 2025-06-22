@@ -30,7 +30,7 @@ var daemonCmd = &cobra.Command{
 	Long:  `Run the score checker as a daemon that performs periodic checks at the configured interval.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		defer logger.Close()
-		
+
 		// Set up signal handling for graceful shutdown
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
@@ -40,7 +40,7 @@ var daemonCmd = &cobra.Command{
 			logger.Close()
 			os.Exit(0)
 		}()
-		
+
 		app.RunDaemon()
 	},
 }

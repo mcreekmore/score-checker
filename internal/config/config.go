@@ -46,7 +46,7 @@ func Load() types.Config {
 	}
 
 	logLevel := viper.GetString("loglevel")
-	
+
 	// Determine log directory based on config file location
 	var logDir string
 	if configFile := viper.ConfigFileUsed(); configFile != "" {
@@ -56,14 +56,14 @@ func Load() types.Config {
 		// Default to current directory if no config file
 		logDir = "."
 	}
-	
+
 	// Initialize logger with file and console output
 	if err := logger.InitFromStringWithFile(logLevel, logDir); err != nil {
 		// Fallback to console-only logging if file logging fails
 		fmt.Printf("Warning: Failed to initialize file logging: %v\n", err)
 		logger.InitFromString(logLevel)
 	}
-	
+
 	config := types.Config{
 		TriggerSearch: viper.GetBool("triggersearch"),
 		BatchSize:     viper.GetInt("batchsize"),

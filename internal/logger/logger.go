@@ -37,7 +37,7 @@ var defaultLogger *Logger
 // Init initializes the global logger with the specified level
 func Init(level LogLevel) {
 	flags := log.Ldate | log.Ltime | log.Lmicroseconds
-	
+
 	defaultLogger = &Logger{
 		errorLogger:   log.New(os.Stderr, "ERROR: ", flags),
 		infoLogger:    log.New(os.Stdout, "INFO:  ", flags),
@@ -50,23 +50,23 @@ func Init(level LogLevel) {
 // InitWithFile initializes the global logger with file and console output
 func InitWithFile(level LogLevel, logDir string) error {
 	flags := log.Ldate | log.Ltime | log.Lmicroseconds
-	
+
 	// Create log directory if it doesn't exist
 	if err := os.MkdirAll(logDir, 0755); err != nil {
 		return err
 	}
-	
+
 	// Open log file
 	logFilePath := filepath.Join(logDir, "score-checker.log")
 	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		return err
 	}
-	
+
 	// Create multi-writers for both console and file output
 	errorWriter := io.MultiWriter(os.Stderr, logFile)
 	infoWriter := io.MultiWriter(os.Stdout, logFile)
-	
+
 	defaultLogger = &Logger{
 		errorLogger:   log.New(errorWriter, "ERROR: ", flags),
 		infoLogger:    log.New(infoWriter, "INFO:  ", flags),
@@ -75,7 +75,7 @@ func InitWithFile(level LogLevel, logDir string) error {
 		level:         level,
 		logFile:       logFile,
 	}
-	
+
 	return nil
 }
 
@@ -186,7 +186,7 @@ func GetLevel() string {
 	if defaultLogger == nil {
 		return "INFO"
 	}
-	
+
 	switch defaultLogger.level {
 	case ERROR:
 		return "ERROR"

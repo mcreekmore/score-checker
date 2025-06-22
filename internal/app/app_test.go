@@ -214,7 +214,7 @@ func TestFindLowScoreMovies(t *testing.T) {
 func TestPrintLowScoreEpisodes(t *testing.T) {
 	// Initialize logger for testing
 	logger.Init(logger.VERBOSE)
-	
+
 	tests := []struct {
 		name           string
 		episodes       []types.LowScoreEpisode
@@ -273,7 +273,7 @@ func TestPrintLowScoreEpisodes(t *testing.T) {
 			oldStdout := os.Stdout
 			r, w, _ := os.Pipe()
 			os.Stdout = w
-			
+
 			// Redirect logger output to the pipe
 			logger.SetOutput(w)
 
@@ -282,7 +282,7 @@ func TestPrintLowScoreEpisodes(t *testing.T) {
 			// Restore stdout
 			w.Close()
 			os.Stdout = oldStdout
-			
+
 			// Restore logger output
 			logger.SetOutput(os.Stdout)
 
@@ -304,7 +304,7 @@ func TestPrintLowScoreEpisodes(t *testing.T) {
 func TestPrintLowScoreMovies(t *testing.T) {
 	// Initialize logger for testing
 	logger.Init(logger.VERBOSE)
-	
+
 	tests := []struct {
 		name           string
 		movies         []types.LowScoreMovie
@@ -359,7 +359,7 @@ func TestPrintLowScoreMovies(t *testing.T) {
 			oldStdout := os.Stdout
 			r, w, _ := os.Pipe()
 			os.Stdout = w
-			
+
 			// Redirect logger output to the pipe
 			logger.SetOutput(w)
 
@@ -368,7 +368,7 @@ func TestPrintLowScoreMovies(t *testing.T) {
 			// Restore stdout
 			w.Close()
 			os.Stdout = oldStdout
-			
+
 			// Restore logger output
 			logger.SetOutput(os.Stdout)
 
