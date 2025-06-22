@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/mcreekmore/score-checker/actions/workflows/ci.yml/badge.svg)](https://github.com/mcreekmore/score-checker/actions/workflows/ci.yml)
 [![Docker](https://github.com/mcreekmore/score-checker/actions/workflows/docker.yml/badge.svg)](https://github.com/mcreekmore/score-checker/actions/workflows/docker.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/mcreekmroe/score-checker)](https://goreportcard.com/report/github.com/mcreekmore/score-checker)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mcreekmore/score-checker)](https://goreportcard.com/report/github.com/mcreekmore/score-checker)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A microservice that monitors Sonarr episodes and Radarr movies for low custom format scores and optionally triggers automatic searches for better quality versions.
