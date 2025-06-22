@@ -100,98 +100,87 @@ func Init() {
 	}
 }
 
-// Load loads configuration using Viper
-func Load() types.Config {
+func parseInterval() time.Duration {
 	interval, err := time.ParseDuration(viper.GetString("interval"))
 	if err != nil {
 		log.Fatalf("Invalid interval format: %v", err)
 	}
+	return interval
+}
 
-	logLevel := viper.GetString("loglevel")
-
-	// Determine log directory based on config file location
-	var logDir string
+func determineLogDir() string {
 	if configFile := viper.ConfigFileUsed(); configFile != "" {
-		// Use the directory where the config file is located
-		logDir = filepath.Dir(configFile)
-	} else {
-		// Default to current directory if no config file
-		logDir = "."
+		return filepath.Dir(configFile)
 	}
+	return "."
+}
 
-	// Initialize logger with file and console output
+func setupLogging() {
+	logDir := determineLogDir()
 	if err := initLoggerWithFile(logDir); err != nil {
-		// Fallback to console-only logging if file logging fails
 		fmt.Printf("Warning: Failed to initialize file logging: %v\n", err)
 		initLogger()
 	}
+}
+
+func generateInstanceName(index int) string {
+	if index == 0 {
+		return "default"
+	}
+	return "instance" + string(rune('0'+index))
+}
+
+func parseServiceInstance(instance map[string]interface{}, index int, serviceName string) types.ServiceConfig {
+	name, ok := instance["name"].(string)
+	if !ok {
+		name = generateInstanceName(index)
+	}
+
+	baseURL, ok := instance["baseurl"].(string)
+	if !ok {
+		log.Fatalf("%s instance '%s' missing baseurl", serviceName, name)
+	}
+
+	apiKey, ok := instance["apikey"].(string)
+	if !ok {
+		log.Fatalf("%s instance '%s' missing apikey", serviceName, name)
+	}
+
+	return types.ServiceConfig{
+		Name:    name,
+		BaseURL: baseURL,
+		APIKey:  apiKey,
+	}
+}
+
+func loadServiceInstances(key, serviceName string) []types.ServiceConfig {
+	var instances []types.ServiceConfig
+	var serviceConfig []map[string]interface{}
+
+	if err := viper.UnmarshalKey(key, &serviceConfig); err == nil {
+		for i, instance := range serviceConfig {
+			config := parseServiceInstance(instance, i, serviceName)
+			instances = append(instances, config)
+		}
+	}
+
+	return instances
+}
+
+// Load loads configuration using Viper
+func Load() types.Config {
+	interval := parseInterval()
+	setupLogging()
 
 	config := types.Config{
 		TriggerSearch: viper.GetBool("triggersearch"),
 		BatchSize:     viper.GetInt("batchsize"),
 		Interval:      interval,
-		LogLevel:      logLevel,
+		LogLevel:      viper.GetString("loglevel"),
 	}
 
-	// Load Sonarr instances
-	var sonarrConfig []map[string]interface{}
-	if err := viper.UnmarshalKey("sonarr", &sonarrConfig); err == nil {
-		for i, instance := range sonarrConfig {
-			name, ok := instance["name"].(string)
-			if !ok {
-				name = "default"
-				if i > 0 {
-					name = "instance" + string(rune('0'+i))
-				}
-			}
-
-			baseURL, ok := instance["baseurl"].(string)
-			if !ok {
-				log.Fatalf("Sonarr instance '%s' missing baseurl", name)
-			}
-
-			apiKey, ok := instance["apikey"].(string)
-			if !ok {
-				log.Fatalf("Sonarr instance '%s' missing apikey", name)
-			}
-
-			config.SonarrInstances = append(config.SonarrInstances, types.ServiceConfig{
-				Name:    name,
-				BaseURL: baseURL,
-				APIKey:  apiKey,
-			})
-		}
-	}
-
-	// Load Radarr instances
-	var radarrConfig []map[string]interface{}
-	if err := viper.UnmarshalKey("radarr", &radarrConfig); err == nil {
-		for i, instance := range radarrConfig {
-			name, ok := instance["name"].(string)
-			if !ok {
-				name = "default"
-				if i > 0 {
-					name = "instance" + string(rune('0'+i))
-				}
-			}
-
-			baseURL, ok := instance["baseurl"].(string)
-			if !ok {
-				log.Fatalf("Radarr instance '%s' missing baseurl", name)
-			}
-
-			apiKey, ok := instance["apikey"].(string)
-			if !ok {
-				log.Fatalf("Radarr instance '%s' missing apikey", name)
-			}
-
-			config.RadarrInstances = append(config.RadarrInstances, types.ServiceConfig{
-				Name:    name,
-				BaseURL: baseURL,
-				APIKey:  apiKey,
-			})
-		}
-	}
+	config.SonarrInstances = loadServiceInstances("sonarr", "Sonarr")
+	config.RadarrInstances = loadServiceInstances("radarr", "Radarr")
 
 	return config
 }

@@ -214,6 +214,66 @@ func TestGetSeries(t *testing.T) {
 	}
 }
 
+func verifyEpisodesRequest(t *testing.T, r *http.Request, expectedSeriesID int) {
+	if r.Header.Get("X-Api-Key") != "test-api-key" {
+		t.Errorf("expected X-Api-Key header 'test-api-key', got %q", r.Header.Get("X-Api-Key"))
+	}
+
+	if r.URL.Path != "/api/v3/episode" {
+		t.Errorf("expected path '/api/v3/episode', got %q", r.URL.Path)
+	}
+
+	seriesID := r.URL.Query().Get("seriesId")
+	expectedSeriesIDStr := fmt.Sprintf("%d", expectedSeriesID)
+	if seriesID != expectedSeriesIDStr {
+		t.Errorf("expected seriesId query param %q, got %q", expectedSeriesIDStr, seriesID)
+	}
+
+	includeEpisodeFile := r.URL.Query().Get("includeEpisodeFile")
+	if includeEpisodeFile != "true" {
+		t.Errorf("expected includeEpisodeFile query param 'true', got %q", includeEpisodeFile)
+	}
+}
+
+func validateEpisode(t *testing.T, episode, expected types.Episode, index int) {
+	if episode.ID != expected.ID {
+		t.Errorf("episode[%d] expected ID %d, got %d", index, expected.ID, episode.ID)
+	}
+	if episode.SeriesID != expected.SeriesID {
+		t.Errorf("episode[%d] expected SeriesID %d, got %d", index, expected.SeriesID, episode.SeriesID)
+	}
+	if episode.Title != expected.Title {
+		t.Errorf("episode[%d] expected Title %q, got %q", index, expected.Title, episode.Title)
+	}
+	if episode.SeasonNumber != expected.SeasonNumber {
+		t.Errorf("episode[%d] expected SeasonNumber %d, got %d", index, expected.SeasonNumber, episode.SeasonNumber)
+	}
+	if episode.EpisodeNumber != expected.EpisodeNumber {
+		t.Errorf("episode[%d] expected EpisodeNumber %d, got %d", index, expected.EpisodeNumber, episode.EpisodeNumber)
+	}
+	if episode.HasFile != expected.HasFile {
+		t.Errorf("episode[%d] expected HasFile %v, got %v", index, expected.HasFile, episode.HasFile)
+	}
+	validateEpisodeFile(t, episode.EpisodeFile, expected.EpisodeFile, index)
+}
+
+func validateEpisodeFile(t *testing.T, actual, expected *types.EpisodeFile, index int) {
+	if expected != nil {
+		if actual == nil {
+			t.Errorf("episode[%d] expected EpisodeFile to not be nil", index)
+			return
+		}
+		if actual.ID != expected.ID {
+			t.Errorf("episode[%d] expected EpisodeFile.ID %d, got %d", index, expected.ID, actual.ID)
+		}
+		if actual.CustomFormatScore != expected.CustomFormatScore {
+			t.Errorf("episode[%d] expected EpisodeFile.CustomFormatScore %d, got %d", index, expected.CustomFormatScore, actual.CustomFormatScore)
+		}
+	} else if actual != nil {
+		t.Errorf("episode[%d] expected EpisodeFile to be nil", index)
+	}
+}
+
 func TestGetEpisodes(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -270,27 +330,7 @@ func TestGetEpisodes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				// Verify API key header
-				if r.Header.Get("X-Api-Key") != "test-api-key" {
-					t.Errorf("expected X-Api-Key header 'test-api-key', got %q", r.Header.Get("X-Api-Key"))
-				}
-
-				// Verify URL path and query parameters
-				if r.URL.Path != "/api/v3/episode" {
-					t.Errorf("expected path '/api/v3/episode', got %q", r.URL.Path)
-				}
-
-				seriesID := r.URL.Query().Get("seriesId")
-				expectedSeriesID := fmt.Sprintf("%d", tt.seriesID)
-				if seriesID != expectedSeriesID {
-					t.Errorf("expected seriesId query param %q, got %q", expectedSeriesID, seriesID)
-				}
-
-				includeEpisodeFile := r.URL.Query().Get("includeEpisodeFile")
-				if includeEpisodeFile != "true" {
-					t.Errorf("expected includeEpisodeFile query param 'true', got %q", includeEpisodeFile)
-				}
-
+				verifyEpisodesRequest(t, r, tt.seriesID)
 				w.WriteHeader(tt.responseCode)
 				_, _ = w.Write([]byte(tt.responseBody))
 			}))
@@ -323,42 +363,67 @@ func TestGetEpisodes(t *testing.T) {
 			}
 
 			for i, expected := range tt.expectedEpisodes {
-				episode := episodes[i]
-				if episode.ID != expected.ID {
-					t.Errorf("episode[%d] expected ID %d, got %d", i, expected.ID, episode.ID)
-				}
-				if episode.SeriesID != expected.SeriesID {
-					t.Errorf("episode[%d] expected SeriesID %d, got %d", i, expected.SeriesID, episode.SeriesID)
-				}
-				if episode.Title != expected.Title {
-					t.Errorf("episode[%d] expected Title %q, got %q", i, expected.Title, episode.Title)
-				}
-				if episode.SeasonNumber != expected.SeasonNumber {
-					t.Errorf("episode[%d] expected SeasonNumber %d, got %d", i, expected.SeasonNumber, episode.SeasonNumber)
-				}
-				if episode.EpisodeNumber != expected.EpisodeNumber {
-					t.Errorf("episode[%d] expected EpisodeNumber %d, got %d", i, expected.EpisodeNumber, episode.EpisodeNumber)
-				}
-				if episode.HasFile != expected.HasFile {
-					t.Errorf("episode[%d] expected HasFile %v, got %v", i, expected.HasFile, episode.HasFile)
-				}
-
-				if expected.EpisodeFile != nil {
-					if episode.EpisodeFile == nil {
-						t.Errorf("episode[%d] expected EpisodeFile to not be nil", i)
-						continue
-					}
-					if episode.EpisodeFile.ID != expected.EpisodeFile.ID {
-						t.Errorf("episode[%d] expected EpisodeFile.ID %d, got %d", i, expected.EpisodeFile.ID, episode.EpisodeFile.ID)
-					}
-					if episode.EpisodeFile.CustomFormatScore != expected.EpisodeFile.CustomFormatScore {
-						t.Errorf("episode[%d] expected EpisodeFile.CustomFormatScore %d, got %d", i, expected.EpisodeFile.CustomFormatScore, episode.EpisodeFile.CustomFormatScore)
-					}
-				} else if episode.EpisodeFile != nil {
-					t.Errorf("episode[%d] expected EpisodeFile to be nil", i)
-				}
+				validateEpisode(t, episodes[i], expected, i)
 			}
 		})
+	}
+}
+
+func verifyEpisodeSearchRequest(t *testing.T, r *http.Request, expectedEpisodeIDs []int) {
+	if r.Header.Get("X-Api-Key") != "test-api-key" {
+		t.Errorf("expected X-Api-Key header 'test-api-key', got %q", r.Header.Get("X-Api-Key"))
+	}
+
+	if r.Header.Get("Content-Type") != "application/json" {
+		t.Errorf("expected Content-Type header 'application/json', got %q", r.Header.Get("Content-Type"))
+	}
+
+	if r.URL.Path != "/api/v3/command" {
+		t.Errorf("expected path '/api/v3/command', got %q", r.URL.Path)
+	}
+
+	if r.Method != "POST" {
+		t.Errorf("expected POST method, got %q", r.Method)
+	}
+
+	var cmdReq types.CommandRequest
+	if err := json.NewDecoder(r.Body).Decode(&cmdReq); err != nil {
+		t.Errorf("failed to decode request body: %v", err)
+		return
+	}
+
+	verifyCommandRequest(t, cmdReq, expectedEpisodeIDs)
+}
+
+func verifyCommandRequest(t *testing.T, cmdReq types.CommandRequest, expectedEpisodeIDs []int) {
+	if cmdReq.Name != "EpisodeSearch" {
+		t.Errorf("expected command name 'EpisodeSearch', got %q", cmdReq.Name)
+	}
+
+	if len(cmdReq.EpisodeIDs) != len(expectedEpisodeIDs) {
+		t.Errorf("expected %d episode IDs, got %d", len(expectedEpisodeIDs), len(cmdReq.EpisodeIDs))
+		return
+	}
+
+	for i, id := range expectedEpisodeIDs {
+		if cmdReq.EpisodeIDs[i] != id {
+			t.Errorf("expected episode ID %d at index %d, got %d", id, i, cmdReq.EpisodeIDs[i])
+		}
+	}
+}
+
+func validateCommandResponse(t *testing.T, actual, expected *types.CommandResponse) {
+	if actual.ID != expected.ID {
+		t.Errorf("expected response ID %d, got %d", expected.ID, actual.ID)
+	}
+	if actual.Name != expected.Name {
+		t.Errorf("expected response Name %q, got %q", expected.Name, actual.Name)
+	}
+	if actual.CommandName != expected.CommandName {
+		t.Errorf("expected response CommandName %q, got %q", expected.CommandName, actual.CommandName)
+	}
+	if actual.Status != expected.Status {
+		t.Errorf("expected response Status %q, got %q", expected.Status, actual.Status)
 	}
 }
 
@@ -392,7 +457,7 @@ func TestTriggerEpisodeSearch(t *testing.T) {
 		{
 			name:             "empty episode IDs",
 			episodeIDs:       []int{},
-			responseCode:     0, // won't be used
+			responseCode:     0,
 			responseBody:     "",
 			expectedResponse: nil,
 			expectError:      true,
@@ -413,46 +478,7 @@ func TestTriggerEpisodeSearch(t *testing.T) {
 
 			if len(tt.episodeIDs) > 0 {
 				server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					// Verify API key header
-					if r.Header.Get("X-Api-Key") != "test-api-key" {
-						t.Errorf("expected X-Api-Key header 'test-api-key', got %q", r.Header.Get("X-Api-Key"))
-					}
-
-					// Verify Content-Type header
-					if r.Header.Get("Content-Type") != "application/json" {
-						t.Errorf("expected Content-Type header 'application/json', got %q", r.Header.Get("Content-Type"))
-					}
-
-					// Verify URL path
-					if r.URL.Path != "/api/v3/command" {
-						t.Errorf("expected path '/api/v3/command', got %q", r.URL.Path)
-					}
-
-					// Verify HTTP method
-					if r.Method != "POST" {
-						t.Errorf("expected POST method, got %q", r.Method)
-					}
-
-					// Verify request body
-					var cmdReq types.CommandRequest
-					if err := json.NewDecoder(r.Body).Decode(&cmdReq); err != nil {
-						t.Errorf("failed to decode request body: %v", err)
-					}
-
-					if cmdReq.Name != "EpisodeSearch" {
-						t.Errorf("expected command name 'EpisodeSearch', got %q", cmdReq.Name)
-					}
-
-					if len(cmdReq.EpisodeIDs) != len(tt.episodeIDs) {
-						t.Errorf("expected %d episode IDs, got %d", len(tt.episodeIDs), len(cmdReq.EpisodeIDs))
-					}
-
-					for i, id := range tt.episodeIDs {
-						if cmdReq.EpisodeIDs[i] != id {
-							t.Errorf("expected episode ID %d at index %d, got %d", id, i, cmdReq.EpisodeIDs[i])
-						}
-					}
-
+					verifyEpisodeSearchRequest(t, r, tt.episodeIDs)
 					w.WriteHeader(tt.responseCode)
 					_, _ = w.Write([]byte(tt.responseBody))
 				}))
@@ -489,18 +515,7 @@ func TestTriggerEpisodeSearch(t *testing.T) {
 				t.Fatal("expected response to not be nil")
 			}
 
-			if resp.ID != tt.expectedResponse.ID {
-				t.Errorf("expected response ID %d, got %d", tt.expectedResponse.ID, resp.ID)
-			}
-			if resp.Name != tt.expectedResponse.Name {
-				t.Errorf("expected response Name %q, got %q", tt.expectedResponse.Name, resp.Name)
-			}
-			if resp.CommandName != tt.expectedResponse.CommandName {
-				t.Errorf("expected response CommandName %q, got %q", tt.expectedResponse.CommandName, resp.CommandName)
-			}
-			if resp.Status != tt.expectedResponse.Status {
-				t.Errorf("expected response Status %q, got %q", tt.expectedResponse.Status, resp.Status)
-			}
+			validateCommandResponse(t, resp, tt.expectedResponse)
 		})
 	}
 }

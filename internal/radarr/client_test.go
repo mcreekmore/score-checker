@@ -36,6 +36,49 @@ func TestNewClient(t *testing.T) {
 	}
 }
 
+func verifyMoviesRequest(t *testing.T, r *http.Request) {
+	if r.Header.Get("X-Api-Key") != "test-api-key" {
+		t.Errorf("expected X-Api-Key header 'test-api-key', got %q", r.Header.Get("X-Api-Key"))
+	}
+
+	if r.URL.Path != "/api/v3/movie" {
+		t.Errorf("expected path '/api/v3/movie', got %q", r.URL.Path)
+	}
+}
+
+func validateMovie(t *testing.T, movie, expected types.MovieWithFile, index int) {
+	if movie.ID != expected.ID {
+		t.Errorf("movie[%d] expected ID %d, got %d", index, expected.ID, movie.ID)
+	}
+	if movie.Title != expected.Title {
+		t.Errorf("movie[%d] expected Title %q, got %q", index, expected.Title, movie.Title)
+	}
+	if movie.Year != expected.Year {
+		t.Errorf("movie[%d] expected Year %d, got %d", index, expected.Year, movie.Year)
+	}
+	if movie.HasFile != expected.HasFile {
+		t.Errorf("movie[%d] expected HasFile %v, got %v", index, expected.HasFile, movie.HasFile)
+	}
+	validateMovieFile(t, movie.MovieFile, expected.MovieFile, index)
+}
+
+func validateMovieFile(t *testing.T, actual, expected *types.MovieFile, index int) {
+	if expected != nil {
+		if actual == nil {
+			t.Errorf("movie[%d] expected MovieFile to not be nil", index)
+			return
+		}
+		if actual.ID != expected.ID {
+			t.Errorf("movie[%d] expected MovieFile.ID %d, got %d", index, expected.ID, actual.ID)
+		}
+		if actual.CustomFormatScore != expected.CustomFormatScore {
+			t.Errorf("movie[%d] expected MovieFile.CustomFormatScore %d, got %d", index, expected.CustomFormatScore, actual.CustomFormatScore)
+		}
+	} else if actual != nil {
+		t.Errorf("movie[%d] expected MovieFile to be nil", index)
+	}
+}
+
 func TestGetMovies(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -113,16 +156,7 @@ func TestGetMovies(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				// Verify API key header
-				if r.Header.Get("X-Api-Key") != "test-api-key" {
-					t.Errorf("expected X-Api-Key header 'test-api-key', got %q", r.Header.Get("X-Api-Key"))
-				}
-
-				// Verify URL path
-				if r.URL.Path != "/api/v3/movie" {
-					t.Errorf("expected path '/api/v3/movie', got %q", r.URL.Path)
-				}
-
+				verifyMoviesRequest(t, r)
 				w.WriteHeader(tt.responseCode)
 				_, _ = w.Write([]byte(tt.responseBody))
 			}))
@@ -155,36 +189,73 @@ func TestGetMovies(t *testing.T) {
 			}
 
 			for i, expected := range tt.expectedMovies {
-				movie := movies[i]
-				if movie.ID != expected.ID {
-					t.Errorf("movie[%d] expected ID %d, got %d", i, expected.ID, movie.ID)
-				}
-				if movie.Title != expected.Title {
-					t.Errorf("movie[%d] expected Title %q, got %q", i, expected.Title, movie.Title)
-				}
-				if movie.Year != expected.Year {
-					t.Errorf("movie[%d] expected Year %d, got %d", i, expected.Year, movie.Year)
-				}
-				if movie.HasFile != expected.HasFile {
-					t.Errorf("movie[%d] expected HasFile %v, got %v", i, expected.HasFile, movie.HasFile)
-				}
-
-				if expected.MovieFile != nil {
-					if movie.MovieFile == nil {
-						t.Errorf("movie[%d] expected MovieFile to not be nil", i)
-						continue
-					}
-					if movie.MovieFile.ID != expected.MovieFile.ID {
-						t.Errorf("movie[%d] expected MovieFile.ID %d, got %d", i, expected.MovieFile.ID, movie.MovieFile.ID)
-					}
-					if movie.MovieFile.CustomFormatScore != expected.MovieFile.CustomFormatScore {
-						t.Errorf("movie[%d] expected MovieFile.CustomFormatScore %d, got %d", i, expected.MovieFile.CustomFormatScore, movie.MovieFile.CustomFormatScore)
-					}
-				} else if movie.MovieFile != nil {
-					t.Errorf("movie[%d] expected MovieFile to be nil", i)
-				}
+				validateMovie(t, movies[i], expected, i)
 			}
 		})
+	}
+}
+
+func verifyMovieSearchRequest(t *testing.T, r *http.Request, expectedMovieIDs []int) {
+	if r.Header.Get("X-Api-Key") != "test-api-key" {
+		t.Errorf("expected X-Api-Key header 'test-api-key', got %q", r.Header.Get("X-Api-Key"))
+	}
+
+	if r.Header.Get("Content-Type") != "application/json" {
+		t.Errorf("expected Content-Type header 'application/json', got %q", r.Header.Get("Content-Type"))
+	}
+
+	if r.URL.Path != "/api/v3/command" {
+		t.Errorf("expected path '/api/v3/command', got %q", r.URL.Path)
+	}
+
+	if r.Method != "POST" {
+		t.Errorf("expected POST method, got %q", r.Method)
+	}
+
+	var cmdReq map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&cmdReq); err != nil {
+		t.Errorf("failed to decode request body: %v", err)
+		return
+	}
+
+	verifyMovieCommand(t, cmdReq, expectedMovieIDs)
+}
+
+func verifyMovieCommand(t *testing.T, cmdReq map[string]interface{}, expectedMovieIDs []int) {
+	if cmdReq["name"] != "MoviesSearch" {
+		t.Errorf("expected command name 'MoviesSearch', got %q", cmdReq["name"])
+	}
+
+	movieIDs, ok := cmdReq["movieIds"].([]interface{})
+	if !ok {
+		t.Error("expected movieIds to be an array")
+		return
+	}
+
+	if len(movieIDs) != len(expectedMovieIDs) {
+		t.Errorf("expected %d movie IDs, got %d", len(expectedMovieIDs), len(movieIDs))
+		return
+	}
+
+	for i, id := range expectedMovieIDs {
+		if int(movieIDs[i].(float64)) != id {
+			t.Errorf("expected movie ID %d at index %d, got %v", id, i, movieIDs[i])
+		}
+	}
+}
+
+func validateMovieCommandResponse(t *testing.T, actual, expected *types.CommandResponse) {
+	if actual.ID != expected.ID {
+		t.Errorf("expected response ID %d, got %d", expected.ID, actual.ID)
+	}
+	if actual.Name != expected.Name {
+		t.Errorf("expected response Name %q, got %q", expected.Name, actual.Name)
+	}
+	if actual.CommandName != expected.CommandName {
+		t.Errorf("expected response CommandName %q, got %q", expected.CommandName, actual.CommandName)
+	}
+	if actual.Status != expected.Status {
+		t.Errorf("expected response Status %q, got %q", expected.Status, actual.Status)
 	}
 }
 
@@ -236,7 +307,7 @@ func TestTriggerMovieSearch(t *testing.T) {
 		{
 			name:             "empty movie IDs",
 			movieIDs:         []int{},
-			responseCode:     0, // won't be used
+			responseCode:     0,
 			responseBody:     "",
 			expectedResponse: nil,
 			expectError:      true,
@@ -257,49 +328,7 @@ func TestTriggerMovieSearch(t *testing.T) {
 
 			if len(tt.movieIDs) > 0 {
 				server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					// Verify API key header
-					if r.Header.Get("X-Api-Key") != "test-api-key" {
-						t.Errorf("expected X-Api-Key header 'test-api-key', got %q", r.Header.Get("X-Api-Key"))
-					}
-
-					// Verify Content-Type header
-					if r.Header.Get("Content-Type") != "application/json" {
-						t.Errorf("expected Content-Type header 'application/json', got %q", r.Header.Get("Content-Type"))
-					}
-
-					// Verify URL path
-					if r.URL.Path != "/api/v3/command" {
-						t.Errorf("expected path '/api/v3/command', got %q", r.URL.Path)
-					}
-
-					// Verify HTTP method
-					if r.Method != "POST" {
-						t.Errorf("expected POST method, got %q", r.Method)
-					}
-
-					// Verify request body
-					var cmdReq map[string]interface{}
-					if err := json.NewDecoder(r.Body).Decode(&cmdReq); err != nil {
-						t.Errorf("failed to decode request body: %v", err)
-					}
-
-					if cmdReq["name"] != "MoviesSearch" {
-						t.Errorf("expected command name 'MoviesSearch', got %q", cmdReq["name"])
-					}
-
-					movieIDs, ok := cmdReq["movieIds"].([]interface{})
-					if !ok {
-						t.Error("expected movieIds to be an array")
-					} else if len(movieIDs) != len(tt.movieIDs) {
-						t.Errorf("expected %d movie IDs, got %d", len(tt.movieIDs), len(movieIDs))
-					} else {
-						for i, id := range tt.movieIDs {
-							if int(movieIDs[i].(float64)) != id {
-								t.Errorf("expected movie ID %d at index %d, got %v", id, i, movieIDs[i])
-							}
-						}
-					}
-
+					verifyMovieSearchRequest(t, r, tt.movieIDs)
 					w.WriteHeader(tt.responseCode)
 					_, _ = w.Write([]byte(tt.responseBody))
 				}))
@@ -336,18 +365,7 @@ func TestTriggerMovieSearch(t *testing.T) {
 				t.Fatal("expected response to not be nil")
 			}
 
-			if resp.ID != tt.expectedResponse.ID {
-				t.Errorf("expected response ID %d, got %d", tt.expectedResponse.ID, resp.ID)
-			}
-			if resp.Name != tt.expectedResponse.Name {
-				t.Errorf("expected response Name %q, got %q", tt.expectedResponse.Name, resp.Name)
-			}
-			if resp.CommandName != tt.expectedResponse.CommandName {
-				t.Errorf("expected response CommandName %q, got %q", tt.expectedResponse.CommandName, resp.CommandName)
-			}
-			if resp.Status != tt.expectedResponse.Status {
-				t.Errorf("expected response Status %q, got %q", tt.expectedResponse.Status, resp.Status)
-			}
+			validateMovieCommandResponse(t, resp, tt.expectedResponse)
 		})
 	}
 }
