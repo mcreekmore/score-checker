@@ -17,41 +17,6 @@ A microservice that monitors Sonarr episodes and Radarr movies for low custom fo
 - **Docker Ready**: Containerized deployment with proper configuration management
 - **Safe Operation**: Dry-run mode by default - only reports findings unless explicitly enabled
 
-## Installation
-
-### Pre-built Binaries
-
-Download the latest release for your platform from the [Releases page](https://github.com/mcreekmore/score-checker/releases).
-
-```bash
-# Linux
-wget https://github.com/mcreekmore/score-checker/releases/latest/download/score-checker-linux-amd64
-chmod +x score-checker-linux-amd64
-./score-checker-linux-amd64 --help
-
-# macOS
-wget https://github.com/mcreekmore/score-checker/releases/latest/download/score-checker-darwin-amd64
-chmod +x score-checker-darwin-amd64
-./score-checker-darwin-amd64 --help
-```
-
-### Docker
-
-```bash
-# Pull from GitHub Container Registry
-docker pull ghcr.io/mcreekmore/score-checker:latest
-
-# Or build locally
-docker build -t score-checker .
-```
-
-### From Source
-
-```bash
-git clone https://github.com/mcreekmore/score-checker.git
-cd score-checker
-make build
-```
 
 ## Configuration
 
