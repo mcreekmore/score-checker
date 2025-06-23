@@ -75,7 +75,7 @@ jobs:
 
     - name: Scan image for vulnerabilities
       if: github.event_name != 'pull_request'
-      uses: anchore/scan-action@v3
+      uses: anchore/scan-action@v6
       with:
         image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         fail-build: false
