@@ -61,6 +61,13 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }} 
         sinceTag: ${{ steps.previous-tag.outputs.tag }}
+        pullRequests: true
+        prWoLabels: true
+        issues: true
+        issuesWoLabels: true
+        author: true
+        unreleased: true
+        compareLink: true
         stripGeneratorNotice: true
 
 
