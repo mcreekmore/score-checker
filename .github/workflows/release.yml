@@ -61,6 +61,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }} 
         sinceTag: ${{ steps.previous-tag.outputs.tag }}
+        stripGeneratorNotice: true
 
 
     - name: Create Release
